@@ -16,6 +16,7 @@ module OpenSSL.X509
     , unsafeX509ToPtr -- private
     , touchX509 -- private
 
+    , readDerX509
     , compareX509
 
     , signX509
@@ -140,6 +141,11 @@ foreign import ccall unsafe "X509_sign"
 foreign import ccall unsafe "X509_verify"
         _verify :: Ptr X509_ -> Ptr EVP_PKEY -> IO CInt
 
+foreign import ccall safe "d2i_X509_bio"
+        _read_bio_X509 :: Ptr BIO_
+                       -> Ptr (Ptr X509_)
+                       -> IO (Ptr X509_)
+
 -- |@'newX509'@ creates an empty certificate. You must set the
 -- following properties to and sign it (see 'signX509') to actually
 -- use the certificate.
@@ -178,6 +184,18 @@ unsafeX509ToPtr (X509 x509) = Unsafe.unsafeForeignPtrToPtr x509
 
 touchX509 :: X509 -> IO ()
 touchX509 (X509 x509) = touchForeignPtr x509
+
+readX509' :: BIO -> IO X509
+readX509' bio
+    = withBioPtr bio $ \ bioPtr ->
+      _read_bio_X509 bioPtr nullPtr 
+           >>= failIfNull
+           >>= wrapX509 
+
+-- |@'readDerX509' der@ reads in a certificate.
+readDerX509 :: String -> IO X509
+readDerX509 derStr
+    = newConstMem derStr >>= readX509'
 
 -- |@'compareX509' cert1 cert2@ compares two certificates.
 compareX509 :: X509 -> X509 -> IO Ordering
