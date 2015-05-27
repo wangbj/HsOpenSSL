@@ -37,6 +37,7 @@ module OpenSSL.Session
   , fdConnection
   , addOption
   , removeOption
+  , setTlsextHostName
   , accept
   , tryAccept
   , connect
@@ -379,6 +380,9 @@ foreign import ccall unsafe "HsOpenSSL_SSL_set_options"
 foreign import ccall unsafe "HsOpenSSL_SSL_clear_options"
     _SSL_clear_options :: Ptr SSL_ -> CLong -> IO CLong
 
+foreign import ccall unsafe "HsOpenSSL_SSL_set_tlsext_host_name"
+    _SSL_set_tlsext_host_name :: Ptr SSL_ -> CString -> IO CLong
+
 -- | Add a protocol option to the SSL connection.
 addOption :: SSL -> SSLOption -> IO ()
 addOption ssl opt =
@@ -390,6 +394,13 @@ removeOption :: SSL -> SSLOption -> IO ()
 removeOption ssl opt =
     withSSL ssl $ \sslPtr ->
         _SSL_clear_options sslPtr (optionToIntegral opt) >> return ()
+
+-- | Set host name for Server Name Indication (SNI)
+setTlsextHostName :: SSL -> String -> IO ()
+setTlsextHostName ssl h =
+    withSSL ssl $ \sslPtr ->
+    withCString h $ \ hPtr ->
+        _SSL_set_tlsext_host_name sslPtr hPtr >> return ()
 
 foreign import ccall "SSL_accept" _ssl_accept :: Ptr SSL_ -> IO CInt
 foreign import ccall "SSL_connect" _ssl_connect :: Ptr SSL_ -> IO CInt
