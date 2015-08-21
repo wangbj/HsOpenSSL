@@ -50,4 +50,3 @@ asDHP (DH fp) = DHP fp
 
 foreign import ccall "DH_free"
   _DH_free :: Ptr DH_ -> IO ()
-
