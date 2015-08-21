@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                      #-}
 {-# LANGUAGE EmptyDataDecls           #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# OPTIONS_HADDOCK prune             #-}
@@ -26,7 +27,9 @@ module OpenSSL.X509.Store
     , getStoreCtxChain
     )
     where
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>))
+#endif
 import Control.Exception (throwIO, mask_)
 import Foreign
 import Foreign.C
