@@ -97,4 +97,3 @@ cipherLBS :: Cipher           -- ^ algorithm to use
 cipherLBS c key iv mode input
     = do ctx <- cipherInitBS c key iv mode
          cipherLazily ctx input
-

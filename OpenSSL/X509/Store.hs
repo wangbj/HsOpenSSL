@@ -145,4 +145,3 @@ getStoreCtxChain :: X509StoreCtx -> IO [X509]
 getStoreCtxChain ctx = withX509StoreCtxPtr ctx $ \pCtx -> do
   stack <- _store_ctx_get_chain pCtx
   (`mapStack` stack) $ \pCert -> mask_ $ _x509_ref pCert >> wrapX509 pCert
-

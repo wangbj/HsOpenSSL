@@ -98,4 +98,3 @@ foreign import ccall unsafe "HsOpenSSL_DH_get_pub_key"
   _DH_get_pub_key :: Ptr DH_ -> IO (Ptr BIGNUM)
 foreign import ccall unsafe "HsOpenSSL_DH_length"
   _DH_length :: Ptr DH_ -> IO CInt
-

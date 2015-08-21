@@ -67,4 +67,3 @@ signLBS md pkey input
     = do ctx <- digestLazily md input
          sig <- signFinal ctx pkey
          return $ L8.fromChunks [sig]
-
