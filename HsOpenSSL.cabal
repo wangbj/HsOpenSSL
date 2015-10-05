@@ -119,6 +119,8 @@ Library
         cbits/HsOpenSSL.c
     Include-Dirs:
         cbits
+    Includes:
+        openssl/asn1.h
 
 Test-Suite test-cipher
     Type:    exitcode-stdio-1.0
