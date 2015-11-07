@@ -8,7 +8,7 @@ test_encodeDecodeEqual :: Test
 test_encodeDecodeEqual = TestCase $ do
   keyPair <- generateRSAKey 1024 3 Nothing
   pubKey <- rsaCopyPublic keyPair
-  assertEqual "encodeDecode" (Just pubKey) (fromDERPub (toDERPub pubKey))
+  assertEqual "encodeDecode" (Just pubKey) (fromDERPub (toDERPub keyPair))
 
 main :: IO ()
 main = TF.defaultMain $ TF.hUnitTestToTests test_encodeDecodeEqual

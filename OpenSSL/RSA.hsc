@@ -254,18 +254,17 @@ foreign import ccall unsafe "i2d_RSAPublicKey"
 fromDERPub :: ByteString -> Maybe RSAPubKey
 fromDERPub bs = unsafePerformIO . usingConvedBS $ \(csPtr, ci) -> do
     rsaPtr <- _fromDERPub nullPtr csPtr ci
-    if rsaPtr == nullPtr then return Nothing else
-        Just . RSAPubKey <$> newForeignPtr _free rsaPtr
+    if rsaPtr == nullPtr then return Nothing else absorbRSAPtr rsaPtr
     where usingConvedBS io = B.useAsCStringLen bs $ \(cs, len) ->
               alloca $ \csPtr -> poke csPtr cs >> io (csPtr, fromIntegral len)
 
 -- |Dump a public key to ASN.1 DER format
-toDERPub :: RSAPubKey -> ByteString
-toDERPub (RSAPubKey k) = unsafePerformIO $ do
-    requiredSize <- withForeignPtr k $ flip _toDERPub nullPtr
+toDERPub :: RSAKey k => k -> ByteString
+toDERPub k = unsafePerformIO $ do
+    requiredSize <- withRSAPtr k $ flip _toDERPub nullPtr
     BI.createAndTrim (fromIntegral requiredSize) $ \ptr ->
         alloca $ \pptr ->
-            (fromIntegral <$>) $ withForeignPtr k $ \key ->
+            (fromIntegral <$>) $ withRSAPtr k $ \key ->
                 poke pptr ptr >> _toDERPub key pptr
 
 {- instances ---------------------------------------------------------------- -}
