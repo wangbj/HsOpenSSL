@@ -16,6 +16,7 @@ module OpenSSL.X509.Request
     , verifyX509Req
 
     , printX509Req
+    , writeX509ReqDER
 
     , makeX509FromReq
 
@@ -44,6 +45,7 @@ import           OpenSSL.Utils
 import           OpenSSL.X509 (X509)
 import qualified OpenSSL.X509 as Cert
 import           OpenSSL.X509.Name
+import           Data.ByteString.Lazy (ByteString)
 
 -- |@'X509Req'@ is an opaque object that represents PKCS#10
 -- certificate request.
@@ -65,6 +67,9 @@ foreign import ccall unsafe "X509_REQ_verify"
 
 foreign import ccall unsafe "X509_REQ_print"
         _print :: Ptr BIO_ -> Ptr X509_REQ -> IO CInt
+
+foreign import ccall unsafe "i2d_X509_REQ_bio"
+        _req_to_der :: Ptr BIO_ -> Ptr X509_REQ -> IO CInt
 
 foreign import ccall unsafe "HsOpenSSL_X509_REQ_get_version"
         _get_version :: Ptr X509_REQ -> IO CLong
@@ -151,6 +156,19 @@ printX509Req req
                  _print memPtr reqPtr
                       >>= failIf_ (/= 1)
          bioRead mem
+
+{- DER encoding ------------------------------------------------------------- -}
+
+-- |@'writeX509ReqDER' req@ writes a PKCS#10 certificate request to DER string.
+writeX509ReqDER :: X509Req -> IO ByteString
+writeX509ReqDER req
+    = do mem <- newMem
+         withBioPtr mem $ \ memPtr ->
+             withX509ReqPtr req $ \ reqPtr ->
+                 _req_to_der memPtr reqPtr
+                      >>= failIf_ (< 0)
+         bioReadLBS mem
+
 
 -- |@'getVersion' req@ returns the version number of certificate
 -- request.
