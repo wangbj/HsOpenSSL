@@ -29,6 +29,8 @@ module OpenSSL.X509.Request
 
     , getPublicKey
     , setPublicKey
+
+    , addExtensions
     )
     where
 
@@ -46,12 +48,14 @@ import           OpenSSL.X509 (X509)
 import qualified OpenSSL.X509 as Cert
 import           OpenSSL.X509.Name
 import           Data.ByteString.Lazy (ByteString)
+import           OpenSSL.Stack
 
 -- |@'X509Req'@ is an opaque object that represents PKCS#10
 -- certificate request.
 newtype X509Req  = X509Req (ForeignPtr X509_REQ)
 data    X509_REQ
 
+data    X509_EXT
 
 foreign import ccall unsafe "X509_REQ_new"
         _new :: IO (Ptr X509_REQ)
@@ -88,6 +92,13 @@ foreign import ccall unsafe "X509_REQ_get_pubkey"
 
 foreign import ccall unsafe "X509_REQ_set_pubkey"
         _set_pubkey :: Ptr X509_REQ -> Ptr EVP_PKEY -> IO CInt
+
+foreign import ccall unsafe "X509V3_EXT_nconf_nid"
+        _ext_create :: Ptr a -> Ptr b -> CInt -> CString -> IO (Ptr X509_EXT)
+
+foreign import ccall unsafe "X509_REQ_add_extensions"
+        _req_add_extensions :: Ptr X509_REQ -> Ptr STACK -> IO CInt
+
 
 -- |@'newX509Req'@ creates an empty certificate request. You must set
 -- the following properties to and sign it (see 'signX509Req') to
@@ -227,6 +238,21 @@ setPublicKey req pkey
       _set_pubkey reqPtr pkeyPtr
            >>= failIf (/= 1)
            >>  return ()
+
+
+-- |@'addExtensions' req [(nid, str)]@
+--
+-- E.g., nid 85 = 'subjectAltName' http://osxr.org:8080/openssl/source/crypto/objects/objects.h#0476
+--
+-- (TODO: more docs; NID type)
+addExtensions :: X509Req -> [(Int, String)] -> IO CInt
+addExtensions req exts =
+  withX509ReqPtr req $ \reqPtr -> do
+    extPtrs <- forM exts make
+    withStack extPtrs $ _req_add_extensions reqPtr
+
+  where
+    make (nid, str) = withCString str $ _ext_create nullPtr nullPtr (fromIntegral nid)
 
 
 -- |@'makeX509FromReq' req cert@ creates an empty X.509 certificate
