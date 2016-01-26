@@ -70,6 +70,7 @@ import OpenSSL.EVP.Internal
 import OpenSSL.Utils
 import OpenSSL.Stack
 import OpenSSL.X509.Name
+import Data.ByteString.Lazy (ByteString)
 
 -- |@'X509'@ is an opaque object that represents X.509 certificate.
 newtype X509  = X509 (ForeignPtr X509_)
@@ -200,11 +201,11 @@ writeX509' bio x509
            >>  return ()
 
 -- |@'writeDerX509' cert@ writes an X.509 certificate to DER string.
-writeDerX509 :: X509 -> IO String
+writeDerX509 :: X509 -> IO ByteString
 writeDerX509 x509
     = do mem <- newMem
          writeX509' mem x509
-         bioRead mem
+         bioReadLBS mem
 
 readX509' :: BIO -> IO X509
 readX509' bio
@@ -214,9 +215,9 @@ readX509' bio
            >>= wrapX509 
 
 -- |@'readDerX509' der@ reads in a certificate.
-readDerX509 :: String -> IO X509
+readDerX509 :: ByteString -> IO X509
 readDerX509 derStr
-    = newConstMem derStr >>= readX509'
+    = newConstMemLBS derStr >>= readX509'
 
 -- |@'compareX509' cert1 cert2@ compares two certificates.
 compareX509 :: X509 -> X509 -> IO Ordering
