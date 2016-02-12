@@ -1,5 +1,5 @@
 module Main (main) where
-import OpenSSL.RSA
+import OpenSSL.DER
 import qualified Test.Framework as TF
 import qualified Test.Framework.Providers.HUnit as TF
 import Test.HUnit

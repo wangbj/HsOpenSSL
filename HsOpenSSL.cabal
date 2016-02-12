@@ -81,6 +81,7 @@ Library
     Exposed-Modules:
         OpenSSL
         OpenSSL.BN
+        OpenSSL.DER
         OpenSSL.EVP.Base64
         OpenSSL.EVP.Cipher
         OpenSSL.EVP.Digest
@@ -146,9 +147,9 @@ Test-Suite test-dsa
     GHC-Options:
         -Wall
 
-Test-Suite test-rsa
+Test-Suite test-der
     Type:    exitcode-stdio-1.0
-    Main-Is: Test/OpenSSL/RSA.hs
+    Main-Is: Test/OpenSSL/DER.hs
     Build-Depends:
         HsOpenSSL,
         HUnit                >= 1.0 && < 1.3,
