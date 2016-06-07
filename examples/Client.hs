@@ -27,7 +27,7 @@ main' = do
   wrappedSSLSocket <- SSL.connection ctx socket
 
   -- perform SSL client handshake
-  conn <- SSL.connect wrappedSSLSocket
+  _ <- SSL.connect wrappedSSLSocket
 
   -- write to socket
   SSL.write wrappedSSLSocket (BC.pack "Hello World!")
