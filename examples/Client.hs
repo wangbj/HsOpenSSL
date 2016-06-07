@@ -3,7 +3,7 @@ module Main where
 import OpenSSL
 import Network.Socket as S
 import OpenSSL.Session as SSL
-import Data.ByteString.Char8 as B8
+import Data.ByteString.Char8 as BC
 
 main = withOpenSSL (main')
 
@@ -30,7 +30,7 @@ main' = do
   conn <- SSL.connect wrappedSSLSocket
 
   -- write to socket
-  SSL.write wrappedSSLSocket (B8.pack "Hello World!")
+  SSL.write wrappedSSLSocket (BC.pack "Hello World!")
 
   -- read one response from peer
   b <- SSL.read wrappedSSLSocket 1024
