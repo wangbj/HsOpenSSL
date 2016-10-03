@@ -159,7 +159,7 @@ Test-Suite test-rsa
     Main-Is: Test/OpenSSL/RSA.hs
     Build-Depends:
         HsOpenSSL,
-        HUnit                >= 1.0 && < 1.3,
+        HUnit                >= 1.0 && < 1.4,
         base                 == 4.*,
         bytestring           >= 0.9 && < 0.11,
         test-framework       >= 0.8 && < 0.9,
