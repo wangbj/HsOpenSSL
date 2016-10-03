@@ -16,10 +16,10 @@ Version:       0.11.2.0
 License:       PublicDomain
 License-File:  COPYING
 Author:        Adam Langley, Mikhail Vorozhtsov, PHO, Taru Karttunen
-Maintainer:    PHO <pho at cielonegro dot org>
+Maintainer:    Vladimir Shabanov <vshabanoff@gmail.com>
 Stability:     stable
-Homepage:      https://github.com/phonohawk/HsOpenSSL
-Bug-Reports:   https://github.com/phonohawk/HsOpenSSL/issues
+Homepage:      https://github.com/vshabanov/HsOpenSSL
+Bug-Reports:   https://github.com/vshabanov/HsOpenSSL/issues
 Category:      Cryptography
 Tested-With:   GHC == 7.6.2
 Cabal-Version: >= 1.10
@@ -40,7 +40,7 @@ Extra-Source-Files:
 
 Source-Repository head
     Type: git
-    Location: git://github.com/phonohawk/HsOpenSSL.git
+    Location: git://github.com/vshabanov/HsOpenSSL.git
 
 Flag fast-bignum
     Description:
