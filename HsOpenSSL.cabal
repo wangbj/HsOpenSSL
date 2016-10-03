@@ -46,7 +46,7 @@ Flag fast-bignum
     Description:
         Enable fast moving of bignums between OpenSSL and GMP (GHC Only).
     Default:
-        False
+        True
 
 Library
     Build-Depends:
