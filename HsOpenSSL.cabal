@@ -12,7 +12,7 @@ Description:
     <http://hackage.haskell.org/package/tls>, which is a pure Haskell
     implementation of SSL.
     .
-Version:       0.11.2.1
+Version:       0.11.2.2
 License:       PublicDomain
 License-File:  COPYING
 Author:        Adam Langley, Mikhail Vorozhtsov, PHO, Taru Karttunen
@@ -65,6 +65,12 @@ Library
             -- Doesn't work since GHC 7.10.1 (integer-gmp-1.0.0.0)
         else
             Build-Depends: ghc-prim, integer
+
+    if os(darwin)
+        Include-Dirs: /usr/local/opt/openssl/include /opt/local/include
+        Extra-Lib-Dirs: /usr/local/opt/openssl/lib /opt/local/lib
+        -- /usr/local for Homebrew
+        -- /opt/local for MacPorts
 
     if os(mingw32)
         Extra-Libraries: eay32 ssl32
