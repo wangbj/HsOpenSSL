@@ -31,6 +31,9 @@ module OpenSSL.RSA
     where
 #include "HsOpenSSL.h"
 import Control.Monad
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B (useAsCStringLen)
 import qualified Data.ByteString.Internal as BI (createAndTrim)
@@ -113,7 +116,7 @@ hasRSAPrivateKey rsaPtr
          p <- (#peek RSA, p) rsaPtr
          q <- (#peek RSA, q) rsaPtr
          return (d /= nullPtr && p /= nullPtr && q /= nullPtr)
-                                               
+
 
 
 foreign import ccall unsafe "&RSA_free"
@@ -310,7 +313,7 @@ instance Show RSAPubKey where
                  , "rsaN = ", show (rsaN a), ", "
                  , "rsaE = ", show (rsaE a)
                  , "}"
-                 ] 
+                 ]
 
 instance Show RSAKeyPair where
     show a
@@ -321,4 +324,4 @@ instance Show RSAKeyPair where
                  , "rsaP = ", show (rsaP a), ", "
                  , "rsaQ = ", show (rsaQ a)
                  , "}"
-                 ] 
+                 ]
