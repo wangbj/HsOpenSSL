@@ -27,7 +27,7 @@ Build-Type:    Simple
 Extra-Source-Files:
     AUTHORS
     ChangeLog
-    README.rst
+    README.md
     cbits/HsOpenSSL.h
     cbits/mutex.h
     examples/Makefile
