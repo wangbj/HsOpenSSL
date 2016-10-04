@@ -3,7 +3,7 @@
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.2.1
 
 	* HsOpenSSL.cabal (Build-Depends):
-	base >= 4.4 (GHC >= 7.2) instead of == 4.* (GHC >= 6.10)
+	base >= 4.4 && < 5 (GHC >= 7.2) instead of == 4.* (GHC >= 6.10)
 
 	* OpenSSL/RSA.hsc: fixed incompatibility with GHC < 7.10
 
