@@ -21,8 +21,8 @@ Stability:     stable
 Homepage:      https://github.com/vshabanov/HsOpenSSL
 Bug-Reports:   https://github.com/vshabanov/HsOpenSSL/issues
 Category:      Cryptography
-Tested-With:   GHC == 7.6.2
 Cabal-Version: >= 1.10
+Tested-With: GHC==8.0.2, GHC==7.10.3, GHC==7.8.4, GHC==7.6.3, GHC==7.4.2
 Build-Type:    Simple
 Extra-Source-Files:
     AUTHORS
