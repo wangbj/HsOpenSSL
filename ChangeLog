@@ -1,5 +1,13 @@
 2016-10-04  Vladimir Shabanov  <vshabanoff@gmail.com>
 
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.2.1
+
+	* OpenSSL/RSA.hsc: fixed incompatibility with GHC < 7.10
+
+	* .travis.yml: Added Travis Job, by Herbert Valerio Riedel @hvr (#8).
+
+2016-10-04  Vladimir Shabanov  <vshabanoff@gmail.com>
+
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.2
 
 	* HsOpenSSL.cabal: New maintainer and GitHub repo path.
