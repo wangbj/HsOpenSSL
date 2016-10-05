@@ -45,7 +45,7 @@ Source-Repository head
 
 Flag fast-bignum
     Description:
-        Enable fast moving of bignums between OpenSSL and GMP (GHC Only).
+        Enable fast moving of bignums between OpenSSL and GMP (GHC only).
     Default:
         True
 
