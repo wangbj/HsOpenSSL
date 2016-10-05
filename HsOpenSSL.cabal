@@ -24,7 +24,7 @@ Category:      Cryptography
 Cabal-Version: >= 1.10
 Tested-With:
     GHC==8.0.2, GHC==7.10.3, GHC==7.8.4, GHC==7.6.3, GHC==7.4.2, GHC==7.2.2
-Build-Type:    Simple
+Build-Type:    Custom
 Extra-Source-Files:
     AUTHORS
     ChangeLog
@@ -49,6 +49,18 @@ Flag fast-bignum
     Default:
         True
 
+Flag homebrew-openssl
+    Description:
+        Use Homebrew version of OpenSSL (macOS only).
+    Default:
+        False
+
+Flag macports-openssl
+    Description:
+        Use MacPorts version of OpenSSL (macOS only).
+    Default:
+        False
+
 Library
     Build-Depends:
         base       >= 4.4 && < 5,
@@ -66,11 +78,13 @@ Library
         else
             Build-Depends: ghc-prim, integer
 
-    if os(darwin)
-        Include-Dirs: /usr/local/opt/openssl/include /opt/local/include
-        Extra-Lib-Dirs: /usr/local/opt/openssl/lib /opt/local/lib
-        -- /usr/local for Homebrew
-        -- /opt/local for MacPorts
+    if os(darwin) && flag(homebrew-openssl)
+        Include-Dirs: /usr/local/opt/openssl/include
+        Extra-Lib-Dirs: /usr/local/opt/openssl/lib
+
+    if os(darwin) && flag(macports-openssl)
+        Include-Dirs: /opt/local/include
+        Extra-Lib-Dirs: /opt/local/lib
 
     if os(mingw32)
         Extra-Libraries: eay32 ssl32
