@@ -67,6 +67,13 @@ module OpenSSL.Session
   , SomeSSLException
   , ConnectionAbruptlyTerminated
   , ProtocolError(..)
+
+    -- * Direct access to OpenSSL objects
+  , SSLContext_
+  , withContext
+  , SSL_
+  , withSSL
+
   ) where
 
 #include "openssl/ssl.h"
@@ -376,6 +383,7 @@ connection context sock@(MkSocket fd _ _ _ _) =
 fdConnection :: SSLContext -> Fd -> IO SSL
 fdConnection context fd = connection' context fd Nothing
 
+-- | Run continuation with exclusive access to the underlying SSL object.
 withSSL :: SSL -> (Ptr SSL_ -> IO a) -> IO a
 withSSL = withMVar . sslMVar
 
