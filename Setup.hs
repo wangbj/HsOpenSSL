@@ -64,7 +64,7 @@ multipleFound fs =
 
 notFound =
     "Can't find OpenSSL library,\n\
-    \install it via 'homebrew install openssl' or 'port install openssl'\n\
+    \install it via 'brew install openssl' or 'port install openssl'\n\
     \or use --extra-include-dirs= and --extra-lib-dirs=\n\
     \to specify location of installed OpenSSL library."
 
