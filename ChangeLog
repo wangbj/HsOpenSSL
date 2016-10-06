@@ -1,3 +1,19 @@
+2016-10-06  Vladimir Shabanov  <vshabanoff@gmail.com>
+
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.2.3
+
+	* HsOpenSSL.cabal, Setup.hs:
+	Automatic detection of Homebrew or MacPorts OpenSSL on macOS
+	with helpful (I hope ;) error messages (phonohawk#41).
+	Previous approach caused ld warning 'directory not found',
+	wasn't informative when OpenSSL is not installed and could
+	potentially prevent linking with OpenSSL from another source.
+
+	* HsOpenSSL.cabal: Bump Cabal-Version to 1.12 (bundled with GHC 7.2.2).
+
+	* OpenSSL/Session.hsc: Exposed OpenSSL.Session internal types,
+	by Eric Mertens @glguy (#10).
+
 2016-10-05  Vladimir Shabanov  <vshabanoff@gmail.com>
 
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.2.2

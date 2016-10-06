@@ -12,7 +12,7 @@ Description:
     <http://hackage.haskell.org/package/tls>, which is a pure Haskell
     implementation of SSL.
     .
-Version:       0.11.2.2
+Version:       0.11.2.3
 License:       PublicDomain
 License-File:  COPYING
 Author:        Adam Langley, Mikhail Vorozhtsov, PHO, Taru Karttunen
@@ -21,7 +21,7 @@ Stability:     stable
 Homepage:      https://github.com/vshabanov/HsOpenSSL
 Bug-Reports:   https://github.com/vshabanov/HsOpenSSL/issues
 Category:      Cryptography
-Cabal-Version: >= 1.10
+Cabal-Version: >= 1.12
 Tested-With:
     GHC==8.0.2, GHC==7.10.3, GHC==7.8.4, GHC==7.6.3, GHC==7.4.2, GHC==7.2.2
 Build-Type:    Custom
