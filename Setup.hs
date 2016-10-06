@@ -7,7 +7,6 @@ import Distribution.Simple.Setup (ConfigFlags(..), toFlag)
 import Distribution.Simple.LocalBuildInfo (localPkgDescr)
 import Distribution.PackageDescription (FlagName(..))
 import Distribution.Verbosity (silent)
-import Text.Show.Pretty
 import System.Info (os)
 import qualified Control.Exception as E (tryJust, throw)
 import System.IO.Error (isUserError)
@@ -20,7 +19,7 @@ import Data.List
 -- Method is dumb -- set homebrew-openssl or macports-openssl flag and try
 -- to configure and check C libs.
 --
--- If no or multiple libraries are found we display error messages
+-- If no or multiple libraries are found we display error message
 -- with instructions.
 
 main
@@ -72,7 +71,7 @@ notFound =
 setFlag f c = c { configConfigurationsFlags = go (configConfigurationsFlags c) }
     where go [] = []
           go (x@(FlagName n, _):xs)
-              | n == f = (FlagName n, True) : xs
+              | n == f = (FlagName f, True) : xs
               | otherwise = x : go xs
 
 tryConfig descr flags =
