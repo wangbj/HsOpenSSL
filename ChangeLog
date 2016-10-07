@@ -1,3 +1,10 @@
+2016-10-08  Vladimir Shabanov  <vshabanoff@gmail.com>
+
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.2.4
+
+	* Setup.hs: Fixed handling of 'cabal configure' errors
+	in Homebrew/MacPorts OpenSSL autodetection.
+
 2016-10-06  Vladimir Shabanov  <vshabanoff@gmail.com>
 
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.2.3
