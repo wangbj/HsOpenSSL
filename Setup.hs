@@ -57,15 +57,15 @@ conf descr cfg = do
                     fs ->
                         fail $ multipleFound fs
 
-multipleFound fs =
-    "Multiple OpenSSL libraries were found,\n\
-    \use " ++ intercalate " or " ["'-f " ++ f ++ "'" | (f,_) <- fs] ++ "\n\
-    \to specify location of installed OpenSSL library."
-
 notFound =
     "Can't find OpenSSL library,\n\
     \install it via 'brew install openssl' or 'port install openssl'\n\
     \or use --extra-include-dirs= and --extra-lib-dirs=\n\
+    \to specify location of installed OpenSSL library."
+
+multipleFound fs =
+    "Multiple OpenSSL libraries were found,\n\
+    \use " ++ intercalate " or " ["'-f " ++ f ++ "'" | (f,_) <- fs] ++ "\n\
     \to specify location of installed OpenSSL library."
 
 setFlag f c = c { configConfigurationsFlags = go (configConfigurationsFlags c) }
@@ -74,18 +74,19 @@ setFlag f c = c { configConfigurationsFlags = go (configConfigurationsFlags c) }
               | n == f = (FlagName f, True) : xs
               | otherwise = x : go xs
 
-tryConfig descr flags =
-    E.tryJust ue $ checkedConfigure descr flags
-    where ue e | isUserError e = Just e
-               | otherwise = Nothing
-
-checkedConfigure descr flags = do
+tryConfig descr flags = do
     lbi <- confHook simpleUserHooks descr flags
     -- confHook simpleUserHooks == Distribution.Simple.Configure.configure
 
-    -- Testing whether C lib and header dependencies are working
-    postConf simpleUserHooks [] flags (localPkgDescr lbi) lbi
-    -- postConf simpleUserHooks ~==
-    --   Distribution.Simple.Configure.checkForeignDeps
+    -- Testing whether C lib and header dependencies are working.
+    -- We check exceptions only here, to check C libs errors but not other
+    -- configuration problems like not resolved .cabal dependencies.
+    E.tryJust ue $ do
+        postConf simpleUserHooks [] flags (localPkgDescr lbi) lbi
+        -- postConf simpleUserHooks ~==
+        --   Distribution.Simple.Configure.checkForeignDeps
 
-    return lbi
+        return lbi
+
+    where ue e | isUserError e = Just e
+               | otherwise = Nothing
