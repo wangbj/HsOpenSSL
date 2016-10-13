@@ -31,21 +31,16 @@ import Control.Monad
 #if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>))
 #endif
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as B (useAsCStringLen)
-import qualified Data.ByteString.Internal as BI (createAndTrim)
 import Data.Typeable
-import Foreign.C.String (CString)
+
 #if MIN_VERSION_base(4,5,0)
-import Foreign.C.Types (CInt(..), CLong(..))
+import Foreign.C.Types (CInt(..))
 #else
-import Foreign.C.Types (CInt, CLong)
+import Foreign.C.Types (CInt)
 #endif
 import Foreign.ForeignPtr (ForeignPtr, finalizeForeignPtr, newForeignPtr, withForeignPtr)
-import Foreign.Marshal.Alloc (alloca)
 import Foreign.Ptr (FunPtr, Ptr, freeHaskellFunPtr, nullFunPtr, nullPtr)
 import Foreign.Storable (Storable(..))
-import GHC.Word (Word8)
 import OpenSSL.BN
 import OpenSSL.Utils
 import System.IO.Unsafe (unsafePerformIO)

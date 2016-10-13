@@ -8,6 +8,9 @@ module OpenSSL.DER
     )
     where
 
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 import           OpenSSL.RSA                (RSA, RSAKey, RSAKeyPair, RSAPubKey,
                                              absorbRSAPtr, withRSAPtr)
 
