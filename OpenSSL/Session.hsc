@@ -141,7 +141,7 @@ foreign import ccall unsafe "SSLv23_method" _ssl_method :: IO (Ptr SSLMethod_)
 -- | Create a new SSL context.
 context :: IO SSLContext
 context = mask_ $ do
-  ctx   <- _ssl_method >>= _ssl_ctx_new
+  ctx   <- _ssl_method >>= _ssl_ctx_new >>= failIfNull
   cbRef <- newIORef Nothing
   mvar  <- newMVar ctx
 #if MIN_VERSION_base(4,6,0)
