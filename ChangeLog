@@ -1,3 +1,10 @@
+2016-10-15  Vladimir Shabanov  <vshabanoff@gmail.com>
+
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.3.1
+
+	* OpenSSL/Session.hsc: Detect failure of SSL_CTX_new,
+	by Eric Mertens @glguy (#13)
+
 2016-10-14  Vladimir Shabanov  <vshabanoff@gmail.com>
 
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.3
