@@ -1,3 +1,10 @@
+2016-10-17  Vladimir Shabanov  <vshabanoff@gmail.com>
+
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.3.2
+
+	* Test/*, HsOpenSSL.cabal (Build-Depends):
+	Removed HUnit, test-framework and test-framework-hunit dependencies.
+
 2016-10-15  Vladimir Shabanov  <vshabanoff@gmail.com>
 
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.3.1
