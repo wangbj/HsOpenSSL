@@ -9,9 +9,7 @@ import Data.String
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
 import OpenSSL.EVP.Base64
-import qualified Test.Framework as TF
-import qualified Test.Framework.Providers.HUnit as TF
-import Test.HUnit
+import Test.OpenSSL.TestUtils
 
 -- NOTE: bytestring-0.9.0.4 has these instances too, while
 -- bytestring-0.9.0.3 does not. If our bytestring is 0.9.0.4 we'll
@@ -26,10 +24,9 @@ instance IsString BSL.ByteString where
   fromString = BSL.fromChunks . map (BS.singleton . fromIntegral . ord)
 #endif
 
-encodeTests :: Test
+encodeTests :: IO ()
 encodeTests =
-    TestLabel "encode" $
-    TestList $ map (\(a, v) -> encodeBase64BS a ~?= v) pairs
+    assertFunction "encodeBase64BS" encodeBase64BS pairs
     where
       pairs :: [(BS.ByteString, BS.ByteString)]
       pairs = [ (""   , ""    )
@@ -38,10 +35,9 @@ encodeTests =
               , ("aaa", "YWFh")
               ]
 
-lazyEncodeTests :: Test
+lazyEncodeTests :: IO ()
 lazyEncodeTests =
-    TestLabel "lazyEncode" $
-    TestList $ map (\(a, v) -> encodeBase64LBS a ~?= v) pairs
+    assertFunction "encodeBase64LBS" encodeBase64LBS pairs
     where
       pairs :: [(BSL.ByteString, BSL.ByteString)]
       pairs = [ (""   , ""    )
@@ -50,10 +46,9 @@ lazyEncodeTests =
               , ("aaa", "YWFh")
               ]
 
-decodeTests :: Test
+decodeTests :: IO ()
 decodeTests =
-    TestLabel "decode" $
-    TestList $ map (\(a, v) -> decodeBase64BS a ~?= v) pairs
+    assertFunction "decodeBase64BS" decodeBase64BS pairs
     where
       pairs :: [(BS.ByteString, BS.ByteString)]
       pairs = [ (""                  , ""           )
@@ -62,12 +57,8 @@ decodeTests =
               , ("YWJjZGVmZ2hpams=\n", "abcdefghijk")
               ]
 
-tests :: Test
-tests = TestList
-        [ encodeTests
-        , lazyEncodeTests
-        , decodeTests
-        ]
-
 main :: IO ()
-main = TF.defaultMain $ TF.hUnitTestToTests tests
+main = do
+    encodeTests
+    lazyEncodeTests
+    decodeTests

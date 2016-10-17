@@ -1,14 +1,13 @@
 module Main (main) where
+
 import qualified Data.ByteString as BS
 import OpenSSL.DSA
-import qualified Test.Framework as TF
-import qualified Test.Framework.Providers.HUnit as TF
-import Test.HUnit
+import Test.OpenSSL.TestUtils
 
 -- | This function just runs the example DSA generation, as given in FIP 186-2,
 --   app 5.
-test_generateParameters :: Test
-test_generateParameters = TestCase $ do
+test_generateParameters :: IO ()
+test_generateParameters = do
   let seed = BS.pack [0xd5, 0x01, 0x4e, 0x4b,
                       0x60, 0xef, 0x2b, 0xa8,
                       0xb6, 0x21, 0x1b, 0x40,
@@ -25,15 +24,14 @@ test_generateParameters = TestCase $ do
 testMessage :: BS.ByteString
 testMessage = BS.pack [1..20]
 
-test_signVerify :: Test
-test_signVerify = TestCase $ do
+test_signVerify :: IO ()
+test_signVerify = do
   dsa    <- generateDSAParametersAndKey 512 Nothing
   (a, b) <- signDigestedDataWithDSA dsa testMessage
   valid  <- verifyDigestedDataWithDSA dsa testMessage (a, b)
   assertBool "signVerify" valid
 
-tests :: Test
-tests = TestList [test_generateParameters, test_signVerify]
-
 main :: IO ()
-main = TF.defaultMain $ TF.hUnitTestToTests tests
+main = do
+    test_generateParameters
+    test_signVerify

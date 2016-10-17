@@ -1,10 +1,9 @@
 -- | Tests for the non-EVP ciphers
 module Main (main) where
+
 import qualified Data.ByteString as BS
 import OpenSSL.Cipher
-import qualified Test.Framework as TF
-import qualified Test.Framework.Providers.HUnit as TF
-import Test.HUnit
+import Test.OpenSSL.TestUtils
 
 -- | Convert a hex string to a ByteString (e.g. "0011" == BS.pack [0, 0x11])
 hexToBS :: String -> BS.ByteString
@@ -64,15 +63,12 @@ ctrTests = [
           (hexToBS "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F20212223")
           (hexToBS "EB6C52821D0BBBF7CE7594462ACA4FAAB407DF866569FD07F48CC0B583D6071F1EC0E6B8") ]
 
-runCtrTest :: CTRTest -> Test
-runCtrTest (CTRTest key iv plaintext ciphertext) =
-    TestCase $ do
-      ctx <- newAESCtx Encrypt key iv
-      ct  <- aesCTR ctx plaintext
-      assertEqual "" ciphertext ct
-
-tests :: Test
-tests = TestList $ map runCtrTest ctrTests
+runCtrTest :: CTRTest -> IO ()
+runCtrTest (CTRTest key iv plaintext ciphertext) = do
+    ctx <- newAESCtx Encrypt key iv
+    ct  <- aesCTR ctx plaintext
+    assertEqual "" ciphertext ct
 
 main :: IO ()
-main = TF.defaultMain $ TF.hUnitTestToTests tests
+main =
+    mapM_ runCtrTest ctrTests
