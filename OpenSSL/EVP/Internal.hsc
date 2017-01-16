@@ -56,7 +56,7 @@ import qualified Data.ByteString.Lazy.Internal as L8
 #if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>))
 #endif
-import Control.Exception (mask, mask_, bracket_, onException)
+import Control.Exception (mask, mask_, bracket, onException)
 import Foreign.C.Types (CChar)
 #if MIN_VERSION_base(4,5,0)
 import Foreign.C.Types (CInt(..), CUInt(..), CSize(..))
@@ -72,7 +72,7 @@ import Foreign.ForeignPtr.Unsafe as Unsafe
 import Foreign.ForeignPtr as Unsafe
 #endif
 import Foreign.Storable (Storable(..))
-import Foreign.Marshal.Alloc (alloca, allocaBytes)
+import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Array (allocaArray)
 import System.IO.Unsafe (unsafeInterleaveIO)
 import OpenSSL.Utils
@@ -98,24 +98,25 @@ cipherIvLength (Cipher cipherPtr) = fromIntegral $ _iv_length cipherPtr
 newtype CipherCtx      = CipherCtx (ForeignPtr EVP_CIPHER_CTX)
 data    EVP_CIPHER_CTX
 
-foreign import ccall unsafe "EVP_CIPHER_CTX_init"
-  _cipher_ctx_init :: Ptr EVP_CIPHER_CTX -> IO ()
+foreign import ccall unsafe "EVP_CIPHER_CTX_new"
+  _cipher_ctx_new :: IO (Ptr EVP_CIPHER_CTX)
 
-foreign import ccall unsafe "&EVP_CIPHER_CTX_cleanup"
-  _cipher_ctx_cleanup :: FunPtr (Ptr EVP_CIPHER_CTX -> IO ())
+foreign import ccall unsafe "EVP_CIPHER_CTX_reset"
+  _cipher_ctx_reset :: Ptr EVP_CIPHER_CTX -> IO ()
 
-foreign import ccall unsafe "EVP_CIPHER_CTX_cleanup"
-  _cipher_ctx_cleanup' :: Ptr EVP_CIPHER_CTX -> IO ()
+foreign import ccall unsafe "&EVP_CIPHER_CTX_free"
+  _cipher_ctx_free :: FunPtr (Ptr EVP_CIPHER_CTX -> IO ())
+
+foreign import ccall unsafe "EVP_CIPHER_CTX_free"
+  _cipher_ctx_free' :: Ptr EVP_CIPHER_CTX -> IO ()
 
 foreign import ccall unsafe "HsOpenSSL_EVP_CIPHER_CTX_block_size"
   _cipher_ctx_block_size :: Ptr EVP_CIPHER_CTX -> CInt
 
 newCipherCtx :: IO CipherCtx
-newCipherCtx = do
-  ctx <- mallocForeignPtrBytes (#size EVP_CIPHER_CTX)
-  mask_ $ do
-    withForeignPtr ctx _cipher_ctx_init
-    addForeignPtrFinalizer _cipher_ctx_cleanup ctx
+newCipherCtx = mask_ $ do
+  ctx <- newForeignPtr _cipher_ctx_free =<< failIfNull =<< _cipher_ctx_new
+  withForeignPtr ctx _cipher_ctx_reset
   return $ CipherCtx ctx
 
 withCipherCtxPtr :: CipherCtx -> (Ptr EVP_CIPHER_CTX -> IO a) -> IO a
@@ -123,8 +124,9 @@ withCipherCtxPtr (CipherCtx ctx) = withForeignPtr ctx
 
 withNewCipherCtxPtr :: (Ptr EVP_CIPHER_CTX -> IO a) -> IO a
 withNewCipherCtxPtr f =
-  allocaBytes (#size EVP_CIPHER_CTX) $ \ptr ->
-    bracket_ (_cipher_ctx_init ptr) (_cipher_ctx_cleanup' ptr) (f ptr)
+  bracket (failIfNull =<< _cipher_ctx_new) _cipher_ctx_free' $ \ p -> do
+    _cipher_ctx_reset p
+    f p
 
 {- encrypt/decrypt ----------------------------------------------------------- -}
 
@@ -139,7 +141,7 @@ foreign import ccall unsafe "EVP_CIPHER_CTX_set_padding"
   _SetPadding :: Ptr EVP_CIPHER_CTX -> CInt -> IO CInt
 
 cipherSetPadding :: CipherCtx -> Int -> IO CipherCtx
-cipherSetPadding ctx pad 
+cipherSetPadding ctx pad
   = do withCipherCtxPtr ctx $ \ctxPtr ->
            _SetPadding ctxPtr (fromIntegral pad)
                >>= failIf_ (/= 1)
@@ -225,18 +227,19 @@ withMDPtr (Digest mdPtr) f = f mdPtr
 newtype DigestCtx  = DigestCtx (ForeignPtr EVP_MD_CTX)
 data    EVP_MD_CTX
 
-foreign import ccall unsafe "EVP_MD_CTX_init"
-  _md_ctx_init :: Ptr EVP_MD_CTX -> IO ()
+foreign import ccall unsafe "EVP_MD_CTX_new"
+  _md_ctx_new :: IO (Ptr EVP_MD_CTX)
 
-foreign import ccall unsafe "&EVP_MD_CTX_cleanup"
-  _md_ctx_cleanup :: FunPtr (Ptr EVP_MD_CTX -> IO ())
+foreign import ccall unsafe "EVP_MD_CTX_reset"
+  _md_ctx_reset :: Ptr EVP_MD_CTX -> IO ()
+
+foreign import ccall unsafe "&EVP_MD_CTX_free"
+  _md_ctx_free :: FunPtr (Ptr EVP_MD_CTX -> IO ())
 
 newDigestCtx :: IO DigestCtx
-newDigestCtx = do
-  ctx <- mallocForeignPtrBytes (#size EVP_MD_CTX)
-  mask_ $ do
-    withForeignPtr ctx _md_ctx_init
-    addForeignPtrFinalizer _md_ctx_cleanup ctx
+newDigestCtx = mask_ $ do
+  ctx <- newForeignPtr _md_ctx_free =<< failIfNull =<< _md_ctx_new
+  withForeignPtr ctx _md_ctx_reset
   return $ DigestCtx ctx
 
 withDigestCtxPtr :: DigestCtx -> (Ptr EVP_MD_CTX -> IO a) -> IO a
