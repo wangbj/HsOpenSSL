@@ -63,8 +63,8 @@ long HsOpenSSL_X509_REQ_get_version(X509_REQ* req);
 X509_NAME* HsOpenSSL_X509_REQ_get_subject_name(X509_REQ* req);
 
 long HsOpenSSL_X509_CRL_get_version(X509_CRL* crl);
-ASN1_TIME* HsOpenSSL_X509_CRL_get_lastUpdate(X509_CRL* crl);
-ASN1_TIME* HsOpenSSL_X509_CRL_get_nextUpdate(X509_CRL* crl);
+const ASN1_TIME* HsOpenSSL_X509_CRL_get_lastUpdate(const X509_CRL* crl);
+const ASN1_TIME* HsOpenSSL_X509_CRL_get_nextUpdate(const X509_CRL* crl);
 X509_NAME* HsOpenSSL_X509_CRL_get_issuer(X509_CRL* crl);
 STACK_OF(X509_REVOKED)* HsOpenSSL_X509_CRL_get_REVOKED(X509_CRL* crl);
 
@@ -82,9 +82,9 @@ void HsOpenSSL_setupMutex();
 
 /* DSA ************************************************************************/
 int HsOpenSSL_dsa_sign(DSA *dsa, const unsigned char *ddata, int len,
-                       BIGNUM **r, BIGNUM **s);
+                       const BIGNUM **r, const BIGNUM **s);
 int HsOpenSSL_dsa_verify(DSA *dsa, const unsigned char *ddata, int len,
-                         BIGNUM *r, BIGNUM *s);
+                         const BIGNUM *r, const BIGNUM *s);
 DSA* HsOpenSSL_DSAPublicKey_dup(const DSA* dsa);
 DSA* HsOpenSSL_DSAPrivateKey_dup(const DSA* dsa);
 

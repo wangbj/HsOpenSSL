@@ -1,3 +1,8 @@
+-- TODO: This test needs to be updated or removed.
+--
+-- It seems that AES_ctr128_encrypt is unavailable in OpenSSL 1.1.0
+-- (as I understand, EVP is suggested instead).
+--
 -- | Tests for the non-EVP ciphers
 module Main (main) where
 

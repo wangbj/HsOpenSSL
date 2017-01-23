@@ -68,19 +68,19 @@ class DSAKey k where
 
     -- |Return the public prime number of the key.
     dsaP :: k -> Integer
-    dsaP = peekI (#peek DSA, p)
+    dsaP = peekI dsa_p
 
     -- |Return the public 160-bit subprime, @q | p - 1@ of the key.
     dsaQ :: k -> Integer
-    dsaQ = peekI (#peek DSA, q)
+    dsaQ = peekI dsa_q
 
     -- |Return the public generator of subgroup of the key.
     dsaG :: k -> Integer
-    dsaG = peekI (#peek DSA, g)
+    dsaG = peekI dsa_g
 
     -- |Return the public key @y = g^x@.
     dsaPublic :: k -> Integer
-    dsaPublic = peekI (#peek DSA, pub_key)
+    dsaPublic = peekI dsa_pub_key
 
     -- private
     withDSAPtr   :: k -> (Ptr DSA -> IO a) -> IO a
@@ -112,7 +112,7 @@ instance DSAKey DSAKeyPair where
 
 hasDSAPrivateKey :: Ptr DSA -> IO Bool
 hasDSAPrivateKey dsaPtr
-    = fmap (/= nullPtr) ((#peek DSA, priv_key) dsaPtr)
+    = fmap (/= nullPtr) (dsa_priv_key dsaPtr)
 
 
 foreign import ccall unsafe "&DSA_free"
@@ -148,6 +148,73 @@ foreign import ccall unsafe "HsOpenSSL_DSAPrivateKey_dup"
 foreign import ccall unsafe "DSA_size"
         _size :: Ptr DSA -> IO CInt
 
+dsa_p, dsa_q, dsa_g, dsa_pub_key, dsa_priv_key :: Ptr DSA -> IO (Ptr BIGNUM)
+setPQG :: Ptr DSA -> Integer -> Integer -> Integer -> IO ()
+setKey :: Ptr DSA -> Ptr BIGNUM -> Ptr BIGNUM -> IO ()
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+
+foreign import ccall unsafe "DSA_get0_pqg"
+        _get0_pqg :: Ptr DSA -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO ()
+
+foreign import ccall unsafe "DSA_get0_key"
+        _get0_key :: Ptr DSA -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO ()
+
+foreign import ccall unsafe "DSA_set0_pqg"
+        _set0_pqg :: Ptr DSA -> Ptr BIGNUM -> Ptr BIGNUM -> Ptr BIGNUM -> IO CInt
+
+foreign import ccall unsafe "DSA_set0_key"
+        _set0_key :: Ptr DSA -> Ptr BIGNUM -> Ptr BIGNUM -> IO CInt
+
+withPQG :: (Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO a)
+        -> Ptr DSA -> IO a
+withPQG f dsa = alloca $ \ p -> alloca $ \ q -> alloca $ \ g -> do
+    poke p nullPtr
+    poke q nullPtr
+    poke g nullPtr
+    _get0_pqg dsa p q g
+    f p q g
+
+dsa_p = withPQG $ \ p _ _ -> peek p
+dsa_q = withPQG $ \ _ q _ -> peek q
+dsa_g = withPQG $ \ _ _ g -> peek g
+
+withKey :: (Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO a) -> Ptr DSA -> IO a
+withKey f dsa = alloca $ \ pub -> alloca $ \ priv -> do
+    poke pub nullPtr
+    poke priv nullPtr
+    _get0_key dsa pub priv
+    f pub priv
+dsa_pub_key  = withKey $ \ p _ -> peek p
+dsa_priv_key = withKey $ \ _ p -> peek p
+
+setPQG ptr p q g = do
+  p' <- fmap unwrapBN (newBN p)
+  q' <- fmap unwrapBN (newBN q)
+  g' <- fmap unwrapBN (newBN g)
+  void $ _set0_pqg ptr p' q' g'
+
+setKey ptr pub priv = void $ _set0_key ptr pub priv
+
+#else
+
+dsa_p = (#peek DSA, p)
+dsa_q = (#peek DSA, q)
+dsa_g = (#peek DSA, g)
+dsa_pub_key  = (#peek DSA, pub_key)
+dsa_priv_key = (#peek DSA, priv_key)
+
+setPQG ptr p q g = do
+  fmap unwrapBN (newBN p) >>= (#poke DSA, p) ptr
+  fmap unwrapBN (newBN q) >>= (#poke DSA, q) ptr
+  fmap unwrapBN (newBN g) >>= (#poke DSA, g) ptr
+
+setKey ptr pub priv = do
+  (#poke DSA, pub_key ) ptr pub
+  (#poke DSA, priv_key) ptr priv
+
+#endif
+
 peekI :: DSAKey k => (Ptr DSA -> IO (Ptr BIGNUM)) -> k -> Integer
 peekI peeker dsa
     = unsafePerformIO $
@@ -173,9 +240,9 @@ generateDSAParameters nbits mseed = do
         failIfNull_ ptr
         itcount <- peek i1
         gencount <- peek i2
-        p <- (#peek DSA, p) ptr >>= peekBN . wrapBN
-        q <- (#peek DSA, q) ptr >>= peekBN . wrapBN
-        g <- (#peek DSA, g) ptr >>= peekBN . wrapBN
+        p <- dsa_p ptr >>= peekBN . wrapBN
+        q <- dsa_q ptr >>= peekBN . wrapBN
+        g <- dsa_g ptr >>= peekBN . wrapBN
         dsa_free ptr
         return (fromIntegral itcount, fromIntegral gencount, p, q, g))))
 
@@ -206,24 +273,22 @@ generateDSAKey :: Integer  -- ^ p
                -> IO DSAKeyPair
 generateDSAKey p q g = do
   ptr <- _dsa_new
-  fmap unwrapBN (newBN p) >>= (#poke DSA, p) ptr
-  fmap unwrapBN (newBN q) >>= (#poke DSA, q) ptr
-  fmap unwrapBN (newBN g) >>= (#poke DSA, g) ptr
+  setPQG ptr p q g
   _dsa_generate_key ptr
   fmap DSAKeyPair (newForeignPtr _free ptr)
 
 -- |Return the private key @x@.
 dsaPrivate :: DSAKeyPair -> Integer
-dsaPrivate = peekI (#peek DSA, priv_key)
+dsaPrivate = peekI dsa_priv_key
 
 -- | Convert a DSAPubKey object to a tuple of its members in the
 --   order p, q, g, and public.
 dsaPubKeyToTuple :: DSAKeyPair -> (Integer, Integer, Integer, Integer)
 dsaPubKeyToTuple dsa
-    = let p   = peekI (#peek DSA, p) dsa
-          q   = peekI (#peek DSA, q) dsa
-          g   = peekI (#peek DSA, g) dsa
-          pub = peekI (#peek DSA, pub_key) dsa
+    = let p   = peekI dsa_p dsa
+          q   = peekI dsa_q dsa
+          g   = peekI dsa_g dsa
+          pub = peekI dsa_pub_key dsa
       in
         (p, q, g, pub)
 
@@ -231,11 +296,11 @@ dsaPubKeyToTuple dsa
 --   order p, q, g, public and private.
 dsaKeyPairToTuple :: DSAKeyPair -> (Integer, Integer, Integer, Integer, Integer)
 dsaKeyPairToTuple dsa
-    = let p   = peekI (#peek DSA, p) dsa
-          q   = peekI (#peek DSA, q) dsa
-          g   = peekI (#peek DSA, g) dsa
-          pub = peekI (#peek DSA, pub_key ) dsa
-          pri = peekI (#peek DSA, priv_key) dsa
+    = let p   = peekI dsa_p dsa
+          q   = peekI dsa_q dsa
+          g   = peekI dsa_g dsa
+          pub = peekI dsa_pub_key  dsa
+          pri = peekI dsa_priv_key dsa
       in
         (p, q, g, pub, pri)
 
@@ -244,11 +309,9 @@ dsaKeyPairToTuple dsa
 tupleToDSAPubKey :: (Integer, Integer, Integer, Integer) -> DSAPubKey
 tupleToDSAPubKey (p, q, g, pub) = unsafePerformIO $ do
   ptr <- _dsa_new
-  fmap unwrapBN (newBN p  ) >>= (#poke DSA, p) ptr
-  fmap unwrapBN (newBN q  ) >>= (#poke DSA, q) ptr
-  fmap unwrapBN (newBN g  ) >>= (#poke DSA, g) ptr
-  fmap unwrapBN (newBN pub) >>= (#poke DSA, pub_key) ptr
-  (#poke DSA, priv_key) ptr nullPtr
+  setPQG ptr p q g
+  pub' <- fmap unwrapBN (newBN pub)
+  setKey ptr pub' nullPtr
   fmap DSAPubKey (newForeignPtr _free ptr)
 
 -- | Convert a tuple of members (in the same format as from
@@ -256,11 +319,10 @@ tupleToDSAPubKey (p, q, g, pub) = unsafePerformIO $ do
 tupleToDSAKeyPair :: (Integer, Integer, Integer, Integer, Integer) -> DSAKeyPair
 tupleToDSAKeyPair (p, q, g, pub, pri) = unsafePerformIO $ do
   ptr <- _dsa_new
-  fmap unwrapBN (newBN p  ) >>= (#poke DSA, p) ptr
-  fmap unwrapBN (newBN q  ) >>= (#poke DSA, q) ptr
-  fmap unwrapBN (newBN g  ) >>= (#poke DSA, g) ptr
-  fmap unwrapBN (newBN pub) >>= (#poke DSA, pub_key ) ptr
-  fmap unwrapBN (newBN pri) >>= (#poke DSA, priv_key) ptr
+  setPQG ptr p q g
+  pub' <- fmap unwrapBN (newBN pub)
+  priv' <- fmap unwrapBN (newBN pri)
+  setKey ptr pub' priv'
   fmap DSAKeyPair (newForeignPtr _free ptr)
 
 -- | A utility function to generate both the parameters and the key pair at the

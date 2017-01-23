@@ -88,12 +88,20 @@ long HsOpenSSL_X509_CRL_get_version(X509_CRL* crl) {
     return X509_CRL_get_version(crl);
 }
 
-ASN1_TIME* HsOpenSSL_X509_CRL_get_lastUpdate(X509_CRL* crl) {
+const ASN1_TIME* HsOpenSSL_X509_CRL_get_lastUpdate(const X509_CRL* crl) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    return X509_CRL_get0_lastUpdate(crl);
+#else
     return X509_CRL_get_lastUpdate(crl);
+#endif
 }
 
-ASN1_TIME* HsOpenSSL_X509_CRL_get_nextUpdate(X509_CRL* crl) {
+const ASN1_TIME* HsOpenSSL_X509_CRL_get_nextUpdate(const X509_CRL* crl) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    return X509_CRL_get0_nextUpdate(crl);
+#else
     return X509_CRL_get_nextUpdate(crl);
+#endif
 }
 
 X509_NAME* HsOpenSSL_X509_CRL_get_issuer(X509_CRL* crl) {
@@ -105,11 +113,19 @@ STACK_OF(X509_REVOKED)* HsOpenSSL_X509_CRL_get_REVOKED(X509_CRL* crl) {
 }
 
 void HsOpenSSL_X509_ref(X509* x509) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    X509_up_ref(x509);
+#else
     CRYPTO_add(&x509->references, 1, CRYPTO_LOCK_X509);
+#endif
 }
 
 void HsOpenSSL_X509_CRL_ref(X509_CRL* crl) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    X509_CRL_up_ref(crl);
+#else
     CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
+#endif
 }
 
 X509* HsOpenSSL_X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx) {
@@ -135,16 +151,41 @@ long HsOpenSSL_PKCS7_is_detached(PKCS7* pkcs7) {
 
 
 /* DH *************************************************************************/
-BIGNUM *HsOpenSSL_DH_get_pub_key(DH *dh) {
+const BIGNUM *HsOpenSSL_DH_get_pub_key(DH *dh) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    const BIGNUM** pub_key = 0;
+    const BIGNUM** priv_key = 0;
+    DH_get0_key(dh, pub_key, priv_key);
+    return *pub_key;
+#else
     return dh->pub_key;
+#endif
 }
 
 int HsOpenSSL_DH_length(DH *dh) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    const BIGNUM** p = 0;
+    const BIGNUM** q = 0;
+    const BIGNUM** g = 0;
+    DH_get0_pqg(dh, p, q, g);
+    return BN_num_bits(*p);
+#else
     return BN_num_bits(dh->p);
+#endif
 }
 
 
 /* ASN1 ***********************************************************************/
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#define M_ASN1_INTEGER_new()    (ASN1_INTEGER *)\
+    ASN1_STRING_type_new(V_ASN1_INTEGER)
+#define M_ASN1_INTEGER_free(a)  ASN1_STRING_free((ASN1_STRING *)a)
+#define M_ASN1_TIME_new()       (ASN1_TIME *)\
+    ASN1_STRING_type_new(V_ASN1_UTCTIME)
+#define M_ASN1_TIME_free(a)     ASN1_STRING_free((ASN1_STRING *)a)
+#endif
+
 ASN1_INTEGER* HsOpenSSL_M_ASN1_INTEGER_new() {
     return M_ASN1_INTEGER_new();
 }
@@ -226,21 +267,39 @@ void HsOpenSSL_setupMutex() {
 /* OpenSSL sadly wants to ASN1 encode the resulting bignums so we use this
  * function to skip that. Returns > 0 on success */
 int HsOpenSSL_dsa_sign(DSA *dsa, const unsigned char *ddata, int dlen,
-                       BIGNUM **r, BIGNUM **s) {
+                       const BIGNUM **r, const BIGNUM **s) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+  DSA_SIG *const sig = DSA_do_sign(ddata, dlen, dsa);
+  if (!sig) return 0;
+  DSA_SIG_get0(sig, r, s);
+  *r = BN_dup(*r);
+  *s = BN_dup(*s);
+  DSA_SIG_free(sig);
+  return 1;
+#else
   DSA_SIG *const sig = dsa->meth->dsa_do_sign(ddata, dlen, dsa);
   if (!sig) return 0;
   *r = sig->r;
   *s = sig->s;
   free(sig);
   return 1;
+#endif
 }
 
 int HsOpenSSL_dsa_verify(DSA *dsa, const unsigned char *ddata, int dlen,
-                         BIGNUM *r, BIGNUM *s) {
+                         const BIGNUM *r, const BIGNUM *s) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+  DSA_SIG* sig = DSA_SIG_new();
+  DSA_SIG_set0(sig, BN_dup(r), BN_dup(s));
+  int res = DSA_do_verify(ddata, dlen, sig, dsa);
+  DSA_SIG_free(sig);
+  return res;
+#else
   DSA_SIG sig;
-  sig.r = r;
-  sig.s = s;
+  sig.r = (BIGNUM *)r;
+  sig.s = (BIGNUM *)s;
   return dsa->meth->dsa_do_verify(ddata, dlen, &sig, dsa);
+#endif
 }
 
 #if !defined(DSAPublicKey_dup)

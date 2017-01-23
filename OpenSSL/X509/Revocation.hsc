@@ -289,10 +289,31 @@ getRevokedList crl
     = withCRLPtr crl $ \ crlPtr ->
         _get_REVOKED crlPtr >>= mapStack peekRevoked
 
+getSerialNumber :: Ptr X509_REVOKED -> IO (Ptr ASN1_INTEGER)
+getRevocationDate :: Ptr X509_REVOKED -> IO (Ptr ASN1_TIME)
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+
+foreign import ccall unsafe "X509_REVOKED_get0_serialNumber"
+        _get0_serialNumber :: Ptr X509_REVOKED -> IO (Ptr ASN1_INTEGER)
+
+foreign import ccall unsafe "X509_REVOKED_get0_revocationDate"
+        _get0_revocationDate :: Ptr X509_REVOKED -> IO (Ptr ASN1_TIME)
+
+getSerialNumber = _get0_serialNumber
+getRevocationDate = _get0_revocationDate
+
+#else
+
+getSerialNumber = (#peek X509_REVOKED, serialNumber  )
+getRevocationDate = (#peek X509_REVOKED, revocationDate)
+
+#endif
+
 peekRevoked :: Ptr X509_REVOKED -> IO RevokedCertificate
 peekRevoked rev = do
-  serial <- peekASN1Integer =<< (#peek X509_REVOKED, serialNumber  ) rev
-  date   <- peekASN1Time    =<< (#peek X509_REVOKED, revocationDate) rev
+  serial <- peekASN1Integer =<< getSerialNumber rev
+  date   <- peekASN1Time    =<< getRevocationDate rev
   return RevokedCertificate { revSerialNumber   = serial
                             , revRevocationDate = date
                             }

@@ -50,15 +50,21 @@ class PublicKey a => KeyPair a where
     toKeyPair (SomeKeyPair pk) = cast pk
 
 
+getType :: Ptr EVP_PKEY -> IO CInt
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 foreign import ccall unsafe "EVP_PKEY_base_id"
         _base_id :: Ptr EVP_PKEY -> IO CInt
-
+getType = _base_id
+#else
+getType = (#peek EVP_PKEY, type)
+#endif
 
 -- Reconstruct the concrete public-key type from an EVP_PKEY.
 withConcretePubKey :: VaguePKey -> (forall k. PublicKey k => k -> IO a) -> IO a
 withConcretePubKey pk f
     = withPKeyPtr pk $ \ pkeyPtr ->
-          do pkeyType <- _base_id pkeyPtr
+          do pkeyType <- getType pkeyPtr
              case pkeyType of
 #if !defined(OPENSSL_NO_RSA)
                (#const EVP_PKEY_RSA)
@@ -78,7 +84,7 @@ withConcretePubKey pk f
 withConcreteKeyPair :: VaguePKey -> (forall k. KeyPair k => k -> IO a) -> IO a
 withConcreteKeyPair pk f
     = withPKeyPtr pk $ \ pkeyPtr ->
-          do pkeyType <- _base_id pkeyPtr
+          do pkeyType <- getType pkeyPtr
              case pkeyType of
 #if !defined(OPENSSL_NO_RSA)
                (#const EVP_PKEY_RSA)
@@ -167,7 +173,7 @@ rsaToPKey rsa
 rsaFromPKey :: RSAKey k => VaguePKey -> IO (Maybe k)
 rsaFromPKey pk
         = withPKeyPtr pk $ \ pkeyPtr ->
-          do pkeyType <- _base_id pkeyPtr
+          do pkeyType <- getType pkeyPtr
              case pkeyType of
                (#const EVP_PKEY_RSA)
                    -> _get1_RSA pkeyPtr >>= absorbRSAPtr
@@ -206,7 +212,7 @@ dsaToPKey dsa
 dsaFromPKey :: DSAKey k => VaguePKey -> IO (Maybe k)
 dsaFromPKey pk
         = withPKeyPtr pk $ \ pkeyPtr ->
-          do pkeyType <- _base_id pkeyPtr
+          do pkeyType <- getType pkeyPtr
              case pkeyType of
                (#const EVP_PKEY_DSA)
                    -> _get1_DSA pkeyPtr >>= absorbDSAPtr

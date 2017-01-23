@@ -41,6 +41,9 @@ import Foreign.C.Types (CInt)
 import Foreign.ForeignPtr (ForeignPtr, finalizeForeignPtr, newForeignPtr, withForeignPtr)
 import Foreign.Ptr (FunPtr, Ptr, freeHaskellFunPtr, nullFunPtr, nullPtr)
 import Foreign.Storable (Storable(..))
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+import Foreign.Marshal.Alloc (alloca)
+#endif
 import OpenSSL.BN
 import OpenSSL.Utils
 import System.IO.Unsafe (unsafePerformIO)
@@ -68,11 +71,11 @@ class RSAKey k where
 
     -- |@'rsaN' key@ returns the public modulus of the key.
     rsaN :: k -> Integer
-    rsaN = peekI (#peek RSA, n)
+    rsaN = peekI rsa_n
 
     -- |@'rsaE' key@ returns the public exponent of the key.
     rsaE :: k -> Integer
-    rsaE = peekI (#peek RSA, e)
+    rsaE = peekI rsa_e
 
     -- private
     withRSAPtr   :: k -> (Ptr RSA -> IO a) -> IO a
@@ -104,9 +107,9 @@ instance RSAKey RSAKeyPair where
 
 hasRSAPrivateKey :: Ptr RSA -> IO Bool
 hasRSAPrivateKey rsaPtr
-    = do d <- (#peek RSA, d) rsaPtr
-         p <- (#peek RSA, p) rsaPtr
-         q <- (#peek RSA, q) rsaPtr
+    = do d <- rsa_d rsaPtr
+         p <- rsa_p rsaPtr
+         q <- rsa_q rsaPtr
          return (d /= nullPtr && p /= nullPtr && q /= nullPtr)
 
 
@@ -195,6 +198,71 @@ generateRSAKey' nbits e
 
 {- exploration -------------------------------------------------------------- -}
 
+rsa_n, rsa_e, rsa_d, rsa_p, rsa_q :: Ptr RSA -> IO (Ptr BIGNUM)
+rsa_dmp1, rsa_dmq1, rsa_iqmp :: Ptr RSA -> IO (Ptr BIGNUM)
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+
+foreign import ccall unsafe "RSA_get0_key"
+        _get0_key :: Ptr RSA -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO ()
+
+foreign import ccall unsafe "RSA_get0_factors"
+        _get0_factors :: Ptr RSA -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO ()
+
+foreign import ccall unsafe "RSA_get0_crt_params"
+        _get0_crt_params :: Ptr RSA -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO ()
+
+withNED :: (Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO b)
+        -> Ptr RSA -> IO b
+withNED f rsa = alloca $ \ n -> alloca $ \ e -> alloca $ \ d -> do
+    poke n nullPtr
+    poke e nullPtr
+    poke d nullPtr
+    _get0_key rsa n e d
+    f n e d
+
+rsa_n = withNED $ \ n _ _ -> peek n
+rsa_e = withNED $ \ _ e _ -> peek e
+rsa_d = withNED $ \ _ _ d -> peek d
+
+withFactors
+    :: (Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO a) -> Ptr RSA -> IO a
+withFactors f rsa = alloca $ \ p -> alloca $ \ q -> do
+    poke p nullPtr
+    poke q nullPtr
+    _get0_factors rsa p q
+    f p q
+
+rsa_p = withFactors $ \ p _ -> peek p
+rsa_q = withFactors $ \ _ q -> peek q
+
+withCrtParams
+    :: (Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> Ptr (Ptr BIGNUM) -> IO b)
+    -> Ptr RSA -> IO b
+withCrtParams f rsa = alloca $ \ dmp1 -> alloca $ \ dmq1 -> alloca $ \ iqmp -> do
+    poke dmp1 nullPtr
+    poke dmq1 nullPtr
+    poke iqmp nullPtr
+    _get0_crt_params rsa dmp1 dmq1 iqmp
+    f dmp1 dmq1 iqmp
+
+rsa_dmp1 = withCrtParams $ \ dmp1 _ _ -> peek dmp1
+rsa_dmq1 = withCrtParams $ \ _ dmq1 _ -> peek dmq1
+rsa_iqmp = withCrtParams $ \ _ _ iqmp -> peek iqmp
+
+#else
+
+rsa_n = (#peek RSA, n)
+rsa_e = (#peek RSA, e)
+rsa_d = (#peek RSA, d)
+rsa_p = (#peek RSA, p)
+rsa_q = (#peek RSA, q)
+rsa_dmp1 = (#peek RSA, dmp1)
+rsa_dmq1 = (#peek RSA, dmq1)
+rsa_iqmp = (#peek RSA, iqmp)
+
+#endif
+
 peekI :: RSAKey a => (Ptr RSA -> IO (Ptr BIGNUM)) -> a -> Integer
 peekI peeker rsa
     = unsafePerformIO $
@@ -215,27 +283,27 @@ peekMI peeker rsa
 
 -- |@'rsaD' privKey@ returns the private exponent of the key.
 rsaD :: RSAKeyPair -> Integer
-rsaD = peekI (#peek RSA, d)
+rsaD = peekI rsa_d
 
 -- |@'rsaP' privkey@ returns the secret prime factor @p@ of the key.
 rsaP :: RSAKeyPair -> Integer
-rsaP = peekI (#peek RSA, p)
+rsaP = peekI rsa_p
 
 -- |@'rsaQ' privkey@ returns the secret prime factor @q@ of the key.
 rsaQ :: RSAKeyPair -> Integer
-rsaQ = peekI (#peek RSA, q)
+rsaQ = peekI rsa_q
 
 -- |@'rsaDMP1' privkey@ returns @d mod (p-1)@ of the key.
 rsaDMP1 :: RSAKeyPair -> Maybe Integer
-rsaDMP1 = peekMI (#peek RSA, dmp1)
+rsaDMP1 = peekMI rsa_dmp1
 
 -- |@'rsaDMQ1' privkey@ returns @d mod (q-1)@ of the key.
 rsaDMQ1 :: RSAKeyPair -> Maybe Integer
-rsaDMQ1 = peekMI (#peek RSA, dmq1)
+rsaDMQ1 = peekMI rsa_dmq1
 
 -- |@'rsaIQMP' privkey@ returns @q^-1 mod p@ of the key.
 rsaIQMP :: RSAKeyPair -> Maybe Integer
-rsaIQMP = peekMI (#peek RSA, iqmp)
+rsaIQMP = peekMI rsa_iqmp
 
 {- instances ---------------------------------------------------------------- -}
 
