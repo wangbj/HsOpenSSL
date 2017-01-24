@@ -46,12 +46,14 @@ module OpenSSL
     where
 import Control.Concurrent.MVar
 import Control.Monad
-import OpenSSL.SSL
 import System.IO.Unsafe
 
 #if !MIN_VERSION_base(4,6,0)
 import Control.Exception (onException, mask_)
 #endif
+
+foreign import ccall "HsOpenSSL_init"
+        initSSL :: IO ()
 
 foreign import ccall "HsOpenSSL_setupMutex"
         setupMutex :: IO ()
@@ -81,9 +83,7 @@ withOpenSSL io
     -- We don't want our initialisation sequence to be interrupted
     -- halfway.
     = do modifyMVarMasked_ isInitialised $ \ done ->
-             do unless done $ do loadErrorStrings
-                                 addAllAlgorithms
-                                 libraryInit
+             do unless done $ do initSSL
                                  setupMutex
                 return True
          io

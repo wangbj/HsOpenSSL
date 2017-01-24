@@ -33,7 +33,7 @@
 #endif
 
 /* OpenSSL ********************************************************************/
-void HsOpenSSL_OpenSSL_add_all_algorithms();
+void HsOpenSSL_init();
 void HsOpenSSL_OPENSSL_free(void* ptr);
 
 /* BIO ************************************************************************/

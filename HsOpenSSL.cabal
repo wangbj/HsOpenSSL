@@ -127,7 +127,6 @@ Library
         OpenSSL.BIO
         OpenSSL.ERR
         OpenSSL.Objects
-        OpenSSL.SSL
         OpenSSL.SSL.Option
         OpenSSL.Stack
         OpenSSL.Utils

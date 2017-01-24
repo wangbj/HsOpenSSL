@@ -4,8 +4,15 @@
 #include "mutex.h"
 
 /* OpenSSL ********************************************************************/
-void HsOpenSSL_OpenSSL_add_all_algorithms() {
+void HsOpenSSL_init() {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    // OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+    // unnecessary in OpenSSL 1.1.0
+#else
+    SSL_load_error_strings();
     OpenSSL_add_all_algorithms();
+    SSL_library_init();
+#endif
 }
 
 void HsOpenSSL_OPENSSL_free(void* ptr) {
