@@ -232,19 +232,22 @@ withMDPtr (Digest mdPtr) f = f mdPtr
 newtype DigestCtx  = DigestCtx (ForeignPtr EVP_MD_CTX)
 data    EVP_MD_CTX
 
-foreign import ccall unsafe "EVP_MD_CTX_new"
-  _md_ctx_new :: IO (Ptr EVP_MD_CTX)
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+foreign import ccall unsafe "EVP_MD_CTX_new"
+  _md_ctx_new :: IO (Ptr EVP_MD_CTX)
 foreign import ccall unsafe "EVP_MD_CTX_reset"
   _md_ctx_reset :: Ptr EVP_MD_CTX -> IO ()
-#else
-foreign import ccall unsafe "EVP_MD_CTX_init"
-  _md_ctx_reset :: Ptr EVP_MD_CTX -> IO ()
-#endif
-
 foreign import ccall unsafe "&EVP_MD_CTX_free"
   _md_ctx_free :: FunPtr (Ptr EVP_MD_CTX -> IO ())
+#else
+foreign import ccall unsafe "EVP_MD_CTX_create"
+  _md_ctx_new :: IO (Ptr EVP_MD_CTX)
+foreign import ccall unsafe "EVP_MD_CTX_init"
+  _md_ctx_reset :: Ptr EVP_MD_CTX -> IO ()
+foreign import ccall unsafe "&EVP_MD_CTX_destroy"
+  _md_ctx_free :: FunPtr (Ptr EVP_MD_CTX -> IO ())
+#endif
 
 newDigestCtx :: IO DigestCtx
 newDigestCtx = mask_ $ do
