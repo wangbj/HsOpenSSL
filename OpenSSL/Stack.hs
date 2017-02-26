@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                      #-}
 {-# LANGUAGE EmptyDataDecls           #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 module OpenSSL.Stack
@@ -15,6 +16,22 @@ import           Foreign.C
 data STACK
 
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+foreign import ccall unsafe "OPENSSL_sk_new_null"
+        skNewNull :: IO (Ptr STACK)
+
+foreign import ccall unsafe "OPENSSL_sk_free"
+        skFree :: Ptr STACK -> IO ()
+
+foreign import ccall unsafe "OPENSSL_sk_push"
+        skPush :: Ptr STACK -> Ptr () -> IO ()
+
+foreign import ccall unsafe "OPENSSL_sk_num"
+        skNum :: Ptr STACK -> IO CInt
+
+foreign import ccall unsafe "OPENSSL_sk_value"
+        skValue :: Ptr STACK -> CInt -> IO (Ptr ())
+#else
 foreign import ccall unsafe "sk_new_null"
         skNewNull :: IO (Ptr STACK)
 
@@ -29,7 +46,7 @@ foreign import ccall unsafe "sk_num"
 
 foreign import ccall unsafe "sk_value"
         skValue :: Ptr STACK -> CInt -> IO (Ptr ())
-
+#endif
 
 mapStack :: (Ptr a -> IO b) -> Ptr STACK -> IO [b]
 mapStack m st

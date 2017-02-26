@@ -100,14 +100,22 @@ foreign import ccall unsafe "X509_CRL_set_version"
 foreign import ccall unsafe "HsOpenSSL_X509_CRL_get_lastUpdate"
         _get_lastUpdate :: Ptr X509_CRL -> IO (Ptr ASN1_TIME)
 
-foreign import ccall unsafe "X509_CRL_set_lastUpdate"
-        _set_lastUpdate :: Ptr X509_CRL -> Ptr ASN1_TIME -> IO CInt
-
 foreign import ccall unsafe "HsOpenSSL_X509_CRL_get_nextUpdate"
         _get_nextUpdate :: Ptr X509_CRL -> IO (Ptr ASN1_TIME)
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+foreign import ccall unsafe "X509_CRL_set1_lastUpdate"
+        _set_lastUpdate :: Ptr X509_CRL -> Ptr ASN1_TIME -> IO CInt
+
+foreign import ccall unsafe "X509_CRL_set1_nextUpdate"
+        _set_nextUpdate :: Ptr X509_CRL -> Ptr ASN1_TIME -> IO CInt
+#else
+foreign import ccall unsafe "X509_CRL_set_lastUpdate"
+        _set_lastUpdate :: Ptr X509_CRL -> Ptr ASN1_TIME -> IO CInt
+
 foreign import ccall unsafe "X509_CRL_set_nextUpdate"
         _set_nextUpdate :: Ptr X509_CRL -> Ptr ASN1_TIME -> IO CInt
+#endif
 
 foreign import ccall unsafe "HsOpenSSL_X509_CRL_get_issuer"
         _get_issuer_name :: Ptr X509_CRL -> IO (Ptr X509_NAME)

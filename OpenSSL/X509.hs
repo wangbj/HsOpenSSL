@@ -116,14 +116,22 @@ foreign import ccall unsafe "X509_set_subject_name"
 foreign import ccall unsafe "HsOpenSSL_X509_get_notBefore"
         _get_notBefore :: Ptr X509_ -> IO (Ptr ASN1_TIME)
 
-foreign import ccall unsafe "X509_set_notBefore"
-        _set_notBefore :: Ptr X509_ -> Ptr ASN1_TIME -> IO CInt
-
 foreign import ccall unsafe "HsOpenSSL_X509_get_notAfter"
         _get_notAfter :: Ptr X509_ -> IO (Ptr ASN1_TIME)
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+foreign import ccall unsafe "X509_set1_notBefore"
+        _set_notBefore :: Ptr X509_ -> Ptr ASN1_TIME -> IO CInt
+
+foreign import ccall unsafe "X509_set1_notAfter"
+        _set_notAfter :: Ptr X509_ -> Ptr ASN1_TIME -> IO CInt
+#else
+foreign import ccall unsafe "X509_set_notBefore"
+        _set_notBefore :: Ptr X509_ -> Ptr ASN1_TIME -> IO CInt
+
 foreign import ccall unsafe "X509_set_notAfter"
         _set_notAfter :: Ptr X509_ -> Ptr ASN1_TIME -> IO CInt
+#endif
 
 foreign import ccall unsafe "X509_get_pubkey"
         _get_pubkey :: Ptr X509_ -> IO (Ptr EVP_PKEY)
