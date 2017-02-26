@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                      #-}
 {-# LANGUAGE EmptyDataDecls           #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# OPTIONS_HADDOCK prune             #-}
@@ -50,6 +49,7 @@ module OpenSSL.X509
     , getSubjectEmail
     )
     where
+#include "HsOpenSSL.h"
 import Control.Monad
 import Data.Time.Clock
 import Data.Maybe

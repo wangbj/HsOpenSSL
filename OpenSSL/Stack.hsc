@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                      #-}
 {-# LANGUAGE EmptyDataDecls           #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 module OpenSSL.Stack
@@ -8,6 +7,7 @@ module OpenSSL.Stack
     , withForeignStack
     )
     where
+#include "HsOpenSSL.h"
 import           Control.Exception
 import           Foreign
 import           Foreign.C

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                      #-}
 {-# LANGUAGE EmptyDataDecls           #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# OPTIONS_HADDOCK prune             #-}
@@ -27,6 +26,7 @@ module OpenSSL.X509.Store
     , getStoreCtxChain
     )
     where
+#include "HsOpenSSL.h"
 #if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>))
 #endif
