@@ -70,10 +70,10 @@ Library
 
     if flag(fast-bignum)
         CPP-Options: -DFAST_BIGNUM
-        if impl(ghc >= 6.11)
+        if impl(ghc >= 7.10.1)
             -- TODO: integer-gmp >= 1 is not supported yet.
             -- https://github.com/phonohawk/HsOpenSSL/issues/36
-            Build-Depends: integer-gmp >= 0.2 && < 1
+            Build-Depends: integer-gmp >= 1.0.0 && < 1.1.0
             -- Doesn't work since GHC 7.10.1 (integer-gmp-1.0.0.0)
         else
             Build-Depends: ghc-prim, integer

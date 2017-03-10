@@ -167,7 +167,7 @@ bnToInteger bn = do
             negative <- (#peek BIGNUM, neg) (unwrapBN bn) :: IO CInt
             if negative == 0
                then return $ S## i
-               else return $ 0 - (S## i)
+               else return $ S## (0## -## i)
     _ -> do
       let !(I## nlimbsi) = fromIntegral nlimbs
           !(I## limbsize) = (#size unsigned long)
@@ -177,8 +177,8 @@ bnToInteger bn = do
       _ <- _copy_in ba limbs $ fromIntegral $ nlimbs * (#size unsigned long)
       negative <- (#peek BIGNUM, neg) (unwrapBN bn) :: IO CInt
       if negative == 0
-         then return $ J## nlimbsi ba
-         else return $ 0 - (J## nlimbsi ba)
+         then return $ Jp## (byteArrayToBigNat## ba nlimbsi)
+         else return $ Jn## (byteArrayToBigNat## ba nlimbsi)
 
 -- | This is a GHC specific, fast conversion between Integers and OpenSSL
 --   bignums. It returns a malloced BigNum.
@@ -212,9 +212,15 @@ integerToBN (S## v) = do
   (#poke BIGNUM, neg) bnptr (if (I## v) < 0 then one else 0)
   return (wrapBN bnptr)
 
-integerToBN v@(J## nlimbs_ bytearray)
-  | v >= 0 = do
-      let nlimbs = (I## nlimbs_)
+integerToBN v =
+  case v of
+    Jp## bn -> convert 0 bn
+    Jn## bn -> convert 1 bn
+    S## _   -> undefined
+  where
+    convert :: CInt -> BigNat -> IO BigNum
+    convert negValue bn@(BN## bytearray) = do
+      let nlimbs = I## (sizeofBigNat## bn)
       bnptr <- mallocBytes (#size BIGNUM)
       limbs <- mallocBytes ((#size unsigned long) * nlimbs)
       (#poke BIGNUM, d) bnptr limbs
@@ -222,12 +228,8 @@ integerToBN v@(J## nlimbs_ bytearray)
       _ <- _copy_out limbs bytearray (fromIntegral $ (#size unsigned long) * nlimbs)
       (#poke BIGNUM, top) bnptr ((fromIntegral nlimbs) :: CInt)
       (#poke BIGNUM, dmax) bnptr ((fromIntegral nlimbs) :: CInt)
-      (#poke BIGNUM, neg) bnptr (0 :: CInt)
+      (#poke BIGNUM, neg) bnptr negValue
       return (wrapBN bnptr)
-  | otherwise = do bnptr <- integerToBN (0-v)
-                   (#poke BIGNUM, neg) (unwrapBN bnptr) (1 :: CInt)
-                   return bnptr
-
 #endif
 
 -- TODO: we could make a function which doesn't even allocate BN data if we
