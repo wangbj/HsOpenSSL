@@ -1,3 +1,10 @@
+#include "HsOpenSSL.h"
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && defined(FAST_BIGNUM))
+-- BIGNUM is opaque type in OpenSSL 1.1.x
+#undef FAST_BIGNUM
+#endif
+
 #if defined(FAST_BIGNUM)
 {-# LANGUAGE BangPatterns             #-}
 #endif
@@ -42,7 +49,7 @@ module OpenSSL.BN
     , prandIntegerOneToNMinusOne
     )
     where
-#include "HsOpenSSL.h"
+
 import           Control.Exception hiding (try)
 import qualified Data.ByteString as BS
 import           Foreign.Marshal
