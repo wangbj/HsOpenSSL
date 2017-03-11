@@ -1,3 +1,10 @@
+2017-03-11  Vladimir Shabanov  <vshabanoff@gmail.com>
+
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.4.2
+
+	* Ported BN to integer-gmp-1.0.x,
+	by SX91 (#17).
+
 2017-02-27  Vladimir Shabanov  <vshabanoff@gmail.com>
 
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.4.1

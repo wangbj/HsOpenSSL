@@ -12,7 +12,7 @@ Description:
     <http://hackage.haskell.org/package/tls>, which is a pure Haskell
     implementation of SSL.
     .
-Version:       0.11.4.1
+Version:       0.11.4.2
 License:       PublicDomain
 License-File:  COPYING
 Author:        Adam Langley, Mikhail Vorozhtsov, PHO, Taru Karttunen
@@ -68,15 +68,12 @@ Library
         network    >= 2.1   && < 2.7,
         time       >= 1.5   && < 1.7
 
-    if flag(fast-bignum)
+    if flag(fast-bignum) && impl(ghc >= 7.10.1)
+        -- only new integer-gmp 1.0.0 is supported
+        -- and it only works in OpenSSL version < 1.1.0 where BIGNUM
+        -- wasn't opaque structure.
         CPP-Options: -DFAST_BIGNUM
-        if impl(ghc >= 7.10.1)
-            -- TODO: integer-gmp >= 1 is not supported yet.
-            -- https://github.com/phonohawk/HsOpenSSL/issues/36
-            Build-Depends: integer-gmp >= 1.0.0 && < 1.1.0
-            -- Doesn't work since GHC 7.10.1 (integer-gmp-1.0.0.0)
-        else
-            Build-Depends: ghc-prim, integer
+        Build-Depends: integer-gmp >= 1.0.0 && < 1.1.0
 
     if os(darwin) && flag(homebrew-openssl)
         Include-Dirs: /usr/local/opt/openssl/include

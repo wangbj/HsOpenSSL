@@ -61,14 +61,7 @@ import           System.IO.Unsafe
 #if defined(FAST_BIGNUM)
 import           Foreign.C.Types
 import           GHC.Base
-#  if MIN_VERSION_integer_gmp(0,2,0)
 import           GHC.Integer.GMP.Internals
-#  else
-import           GHC.Num
-import           GHC.Prim
-import           GHC.Integer.Internals
-import           GHC.IOBase (IO(..))
-#  endif
 #else
 import           Control.Monad
 import           Foreign.C
