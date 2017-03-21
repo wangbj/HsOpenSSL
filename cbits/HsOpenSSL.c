@@ -70,6 +70,26 @@ int HsOpenSSL_EVP_CIPHER_iv_length(EVP_CIPHER* cipher) {
     return EVP_CIPHER_iv_length(cipher);
 }
 
+/* EVP HMAC *******************************************************************/
+HMAC_CTX *HsOpenSSL_HMAC_CTX_new(void) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    return HMAC_CTX_new();
+#else
+    HMAC_CTX *ctx = (HMAC_CTX *)malloc(sizeof(HMAC_CTX));
+    HMAC_CTX_init(ctx);
+    return ctx;
+#endif
+}
+
+void HsOpenSSL_HMAC_CTX_free(HMAC_CTX *ctx) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    return HMAC_CTX_free();
+#else
+    HMAC_CTX_cleanup(ctx);
+    free(ctx);
+#endif
+}
+
 /* X509 ***********************************************************************/
 long HsOpenSSL_X509_get_version(X509* x509) {
     return X509_get_version(x509);

@@ -35,6 +35,14 @@ module OpenSSL.EVP.Internal (
     digestStrictly,
     digestLazily,
 
+    HmacCtx(..),
+    HMAC_CTX,
+    withHmacCtxPtr,
+
+    hmacUpdateBS,
+    hmacFinalBS,
+    hmacLazily,
+
     VaguePKey(..),
     EVP_PKEY,
     PKey(..),
@@ -76,6 +84,7 @@ import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Array (allocaArray)
 import System.IO.Unsafe (unsafeInterleaveIO)
 import OpenSSL.Utils
+
 
 {- EVP_CIPHER ---------------------------------------------------------------- -}
 
@@ -312,6 +321,62 @@ digestLazily :: Digest -> L8.ByteString -> IO DigestCtx
 digestLazily md lbs = do
   ctx <- digestInit md
   mapM_ (digestUpdateBS ctx) $ L8.toChunks lbs
+  return ctx
+
+{- HMAC ---------------------------------------------------------------------- -}
+newtype HmacCtx = HmacCtx (ForeignPtr HMAC_CTX)
+data HMAC_CTX
+
+foreign import ccall unsafe "HsOpenSSL_HMAC_CTX_init"
+  _hmac_ctx_new :: IO (Ptr HMAC_CTX)
+
+foreign import ccall unsafe "HMAC_Init"
+  _hmac_init :: Ptr HMAC_CTX -> Ptr () -> CInt -> Ptr EVP_MD -> IO CInt
+
+foreign import ccall unsafe "HMAC_Update"
+  _hmac_update :: Ptr HMAC_CTX -> Ptr CChar -> CInt -> IO CInt
+
+foreign import ccall unsafe "HMAC_Final"
+  _hmac_final :: Ptr HMAC_CTX -> Ptr CChar -> Ptr CInt -> IO CUInt
+
+foreign import ccall unsafe "&HsOpenSSL_HMAC_CTX_free"
+  _hmac_ctx_free :: FunPtr (Ptr HMAC_CTX -> IO ())
+
+newHmacCtx :: IO HmacCtx
+newHmacCtx = do
+    ctxPtr <- _hmac_ctx_new
+    HmacCtx <$> newForeignPtr _hmac_ctx_free ctxPtr
+
+withHmacCtxPtr :: HmacCtx -> (Ptr HMAC_CTX -> IO a) -> IO a
+withHmacCtxPtr (HmacCtx ctx) = withForeignPtr ctx
+
+hmacInit :: Digest -> B8.ByteString -> IO HmacCtx
+hmacInit (Digest md) key = do
+  ctx <- newHmacCtx
+  withHmacCtxPtr ctx $ \ctxPtr ->
+    B8.unsafeUseAsCStringLen key $ \(keyPtr, keyLen) ->
+      _hmac_init ctxPtr (castPtr keyPtr) (fromIntegral keyLen) md
+        >>= failIf_ (/= 1)
+        >> return ctx
+
+hmacUpdateBS :: HmacCtx -> B8.ByteString -> IO ()
+hmacUpdateBS ctx bs = withHmacCtxPtr ctx $ \ctxPtr -> do
+  B8.unsafeUseAsCStringLen bs $ \(buf, len) ->
+    _hmac_update ctxPtr (castPtr buf) (fromIntegral len)
+      >>= failIf_ (/= 1)
+
+hmacFinalBS :: HmacCtx -> IO B8.ByteString
+hmacFinalBS ctx =
+  withHmacCtxPtr ctx $ \ctxPtr ->
+    B8.createAndTrim (#const EVP_MAX_MD_SIZE) $ \bufPtr ->
+      alloca $ \bufLenPtr -> do
+        _hmac_final ctxPtr (castPtr bufPtr) bufLenPtr >>= failIf_ (/= 1)
+        fromIntegral <$> peek bufLenPtr
+
+hmacLazily :: Digest -> B8.ByteString -> L8.ByteString -> IO HmacCtx
+hmacLazily md key lbs = do
+  ctx <- hmacInit md key
+  mapM_ (hmacUpdateBS ctx) $ L8.toChunks lbs
   return ctx
 
 {- EVP_PKEY ------------------------------------------------------------------ -}

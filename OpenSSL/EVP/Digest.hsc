@@ -11,6 +11,7 @@ module OpenSSL.EVP.Digest
     , digestLBS
 
     , hmacBS
+    , hmacLBS
     , pkcs5_pbkdf2_hmac_sha1
     )
     where
@@ -98,6 +99,10 @@ hmacBS (Digest md) key input =
        bufPtr bufLenPtr
      bufLen <- fromIntegral <$> peek bufLenPtr
      B8.packCStringLen (bufPtr, bufLen)
+
+hmacLBS :: Digest -> B8.ByteString -> L8.ByteString -> B8.ByteString
+hmacLBS md key input
+    = unsafePerformIO $ hmacLazily md key input >>= hmacFinalBS
 
 -- | Calculate a PKCS5-PBKDF2 SHA1-HMAC suitable for password hashing.
 pkcs5_pbkdf2_hmac_sha1 :: B8.ByteString -- ^ password
