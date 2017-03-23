@@ -327,7 +327,7 @@ digestLazily md lbs = do
 newtype HmacCtx = HmacCtx (ForeignPtr HMAC_CTX)
 data HMAC_CTX
 
-foreign import ccall unsafe "HsOpenSSL_HMAC_CTX_init"
+foreign import ccall unsafe "HsOpenSSL_HMAC_CTX_new"
   _hmac_ctx_new :: IO (Ptr HMAC_CTX)
 
 foreign import ccall unsafe "HMAC_Init"
