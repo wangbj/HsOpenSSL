@@ -1,3 +1,11 @@
+2017-03-24  Vladimir Shabanov  <vshabanoff@gmail.com>
+
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.4.4
+
+	* OpenSSL/EVP/Digest.hsc (hmacLBS): fixed linking error (#19).
+
+	* Tests/OpenSSL/EVP/Digest.hs: added tests for hmacBS and hmacLBS.
+
 2017-03-22  Vladimir Shabanov  <vshabanoff@gmail.com>
 
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.4.3
