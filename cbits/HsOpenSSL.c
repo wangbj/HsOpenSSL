@@ -83,7 +83,7 @@ HMAC_CTX *HsOpenSSL_HMAC_CTX_new(void) {
 
 void HsOpenSSL_HMAC_CTX_free(HMAC_CTX *ctx) {
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-    return HMAC_CTX_free();
+    HMAC_CTX_free(ctx);
 #else
     HMAC_CTX_cleanup(ctx);
     free(ctx);
