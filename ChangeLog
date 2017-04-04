@@ -1,3 +1,9 @@
+2017-04-04  Vladimir Shabanov  <vshabanoff@gmail.com>
+
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.4.5
+
+	* cbits/HsOpenSSL.c: fixed HMAC_CTX_free invocation (#21)
+
 2017-03-24  Vladimir Shabanov  <vshabanoff@gmail.com>
 
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.4.4
