@@ -1,3 +1,10 @@
+2017-04-05  Vladimir Shabanov  <vshabanoff@gmail.com>
+
+	* HsOpenSSL.cabal (Version): Bump version to 0.11.4.6
+
+	* Setup.hs: builds with ghc 8.2,
+	by Erik de Castro Lopo @erikd (#22)
+
 2017-04-04  Vladimir Shabanov  <vshabanoff@gmail.com>
 
 	* HsOpenSSL.cabal (Version): Bump version to 0.11.4.5
