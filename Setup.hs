@@ -1,5 +1,3 @@
-#!/usr/bin/env runghc
-
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TupleSections #-}
 
