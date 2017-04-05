@@ -1,9 +1,16 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TupleSections #-}
 
 import Distribution.Simple
 import Distribution.Simple.Setup (ConfigFlags(..), toFlag)
 import Distribution.Simple.LocalBuildInfo (localPkgDescr)
+
+#if __GLASGOW_HASKELL__ >= 802
+import Distribution.PackageDescription (FlagName(..), mkFlagName)
+#else
 import Distribution.PackageDescription (FlagName(..))
+#endif
+
 import Distribution.Verbosity (silent)
 import System.Info (os)
 import qualified Control.Exception as E (tryJust, throw)
@@ -34,13 +41,13 @@ conf descr cfg = do
         Right lbi -> return lbi -- library was found
         Left e
             | configConfigurationsFlags cfg
-              `intersect` [(FlagName f, True) | f <- flags] /= [] ->
+              `intersect` [(mkFlagName f, True) | f <- flags] /= [] ->
                 E.throw e
                 -- flag was set but library still wasn't found
             | otherwise -> do
                 r <- forM flags $ \ f ->
                     fmap (f,) $ tryConfig descr $
-                    setFlag f cfg { configVerbosity = toFlag silent }
+                    setFlag (mkFlagName f) cfg { configVerbosity = toFlag silent }
                     -- TODO: configure is a long operation
                     -- while checkForeignDeps is fast.
                     -- Perhaps there is a way to configure once
@@ -55,21 +62,23 @@ conf descr cfg = do
                     fs ->
                         fail $ multipleFound fs
 
-notFound =
-    "Can't find OpenSSL library,\n\
-    \install it via 'brew install openssl' or 'port install openssl'\n\
-    \or use --extra-include-dirs= and --extra-lib-dirs=\n\
-    \to specify location of installed OpenSSL library."
+notFound = unlines
+    [ "Can't find OpenSSL library,"
+    , "install it via 'brew install openssl' or 'port install openssl'"
+    , "or use --extra-include-dirs= and --extra-lib-dirs="
+    , "to specify location of installed OpenSSL library."
+    ]
 
-multipleFound fs =
-    "Multiple OpenSSL libraries were found,\n\
-    \use " ++ intercalate " or " ["'-f " ++ f ++ "'" | (f,_) <- fs] ++ "\n\
-    \to specify location of installed OpenSSL library."
+multipleFound fs = unlines
+    [ "Multiple OpenSSL libraries were found,"
+    , "use " ++ intercalate " or " ["'-f " ++ f ++ "'" | (f,_) <- fs]
+    , "to specify location of installed OpenSSL library."
+    ]
 
 setFlag f c = c { configConfigurationsFlags = go (configConfigurationsFlags c) }
     where go [] = []
-          go (x@(FlagName n, _):xs)
-              | n == f = (FlagName f, True) : xs
+          go (x@(n, _):xs)
+              | n == f = (f, True) : xs
               | otherwise = x : go xs
 
 tryConfig descr flags = do
@@ -88,3 +97,8 @@ tryConfig descr flags = do
 
     where ue e | isUserError e = Just e
                | otherwise = Nothing
+
+#if __GLASGOW_HASKELL__ < 802
+mkFlagName = FlagName
+#endif
+
