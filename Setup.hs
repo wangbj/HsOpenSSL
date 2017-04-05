@@ -1,5 +1,3 @@
-#!/usr/bin/env runghc
-
 {-# LANGUAGE TupleSections #-}
 
 import Distribution.Simple
