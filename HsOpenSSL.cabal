@@ -12,7 +12,7 @@ Description:
     <http://hackage.haskell.org/package/tls>, which is a pure Haskell
     implementation of SSL.
     .
-Version:       0.11.4.6
+Version:       0.11.4.7
 License:       PublicDomain
 License-File:  COPYING
 Author:        Adam Langley, Mikhail Vorozhtsov, PHO, Taru Karttunen
@@ -84,7 +84,12 @@ Library
         Extra-Lib-Dirs: /opt/local/lib
 
     if os(mingw32)
-        Extra-Libraries: eay32 ssl32
+        if arch(x86_64)
+            Extra-Libraries: eay32 ssl
+            
+        if arch(x86)
+            Extra-Libraries: eay32 ssl32
+            
         C-Sources:       cbits/mutex-win.c
         CC-Options:      -D MINGW32
         CPP-Options:     -DCALLCONV=stdcall
