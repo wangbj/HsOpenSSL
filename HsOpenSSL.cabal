@@ -61,6 +61,10 @@ Flag macports-openssl
     Default:
         False
 
+Custom-setup
+    setup-depends: Cabal >=1.12 && <2.1,
+                   base  >=4.4  && <5
+
 Library
     Build-Depends:
         base       >= 4.4 && < 5,
