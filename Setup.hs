@@ -1,11 +1,15 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TupleSections #-}
 
+#ifndef MIN_VERSION_Cabal
+#define MIN_VERSION_Cabal(x,y,z) 0
+#endif
+
 import Distribution.Simple
 import Distribution.Simple.Setup (ConfigFlags(..), toFlag)
 import Distribution.Simple.LocalBuildInfo (localPkgDescr)
 
-#if __GLASGOW_HASKELL__ >= 802
+#if MIN_VERSION_Cabal(2,0,0)
 import Distribution.PackageDescription (FlagName(..), mkFlagName)
 #else
 import Distribution.PackageDescription (FlagName(..))
@@ -17,6 +21,10 @@ import qualified Control.Exception as E (tryJust, throw)
 import System.IO.Error (isUserError)
 import Control.Monad (forM)
 import Data.List
+
+#if !(MIN_VERSION_Cabal(2,0,0))
+mkFlagName = FlagName
+#endif
 
 -- On macOS we're checking whether OpenSSL library is avaiable
 -- and if not, we're trying to find Homebrew or MacPorts OpenSSL installations.
@@ -97,8 +105,3 @@ tryConfig descr flags = do
 
     where ue e | isUserError e = Just e
                | otherwise = Nothing
-
-#if __GLASGOW_HASKELL__ < 802
-mkFlagName = FlagName
-#endif
-
