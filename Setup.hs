@@ -2,6 +2,9 @@
 {-# LANGUAGE TupleSections #-}
 
 #ifndef MIN_VERSION_Cabal
+-- MIN_VERSION_Cabal is defined and available to custom Setup.hs scripts
+-- if either GHC >= 8.0 or cabal-install >= 1.24 is used.
+-- So if it isn't defined, it's very likely we don't have Cabal >= 2.0.
 #define MIN_VERSION_Cabal(x,y,z) 0
 #endif
 
