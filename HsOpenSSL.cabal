@@ -90,8 +90,8 @@ Library
     if os(mingw32)
         if arch(x86_64)
             Extra-Libraries: ssl crypto
-            Include-Dirs: $USERPROFILE/scoop/apps/openssl/current/include
-            Extra-Lib-Dirs: $USERPROFILE/scoop/apps/openssl/current/lib
+            Include-Dirs: C:\openssl\include
+            Extra-Lib-Dirs: C:\openssl\lib
 
         if arch(i386)
             Extra-Libraries: eay32 ssl32
