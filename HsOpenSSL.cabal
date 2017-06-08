@@ -97,7 +97,7 @@ Library
             Extra-Libraries: eay32 ssl32
 
         C-Sources:       cbits/mutex-win.c
-        CC-Options:      -D MINGW32
+        CC-Options:      -D MINGW32 -DNOCRYPT
         CPP-Options:     -DCALLCONV=stdcall
     else
         Extra-Libraries: crypto ssl
