@@ -90,8 +90,6 @@ Library
     if os(mingw32)
         if arch(x86_64)
             Extra-Libraries: crypto-1_1-x64 ssl-1_1-x64
-            Include-Dirs: C:\openssl\include
-            Extra-Lib-Dirs: C:\openssl\bin
 
         if arch(i386)
             Extra-Libraries: eay32 ssl32
